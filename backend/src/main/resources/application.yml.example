@@ -1,0 +1,42 @@
+# =========================================================================
+# FILE CẤU HÌNH HỆ THỐNG MẪU (BACKEND SPRING BOOT)
+# HƯỚNG DẪN: Copy file này thành "application.yml" và điền mật khẩu Database của bạn
+# =========================================================================
+spring:
+  application:
+    name: elearning-backend
+  profiles:
+    active: local # Tự động nạp cấu hình bổ sung từ application-local.yml
+
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=ELearningDB;encrypt=true;trustServerCertificate=true
+    username: NHAP_USERNAME_DATABASE_CUA_BAN # Ví dụ: sa
+    password: NHAP_MAT_KHAU_DATABASE_CUA_BAN # Ví dụ: Sa123456
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.SQLServerDialect
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+google:
+  client-id: ${GOOGLE_CLIENT_ID:YOUR_GOOGLE_CLIENT_ID_PLACEHOLDER}
+  client-secret: ${GOOGLE_CLIENT_SECRET:YOUR_GOOGLE_CLIENT_SECRET_PLACEHOLDER}
+
+jwt:
+  secret: yourSuperSecretKeyMustBeAtLeast256BitsLongForHMACSHA256Algorithm123456
+  expiration: 3600000
+  refresh-expiration: 604800000

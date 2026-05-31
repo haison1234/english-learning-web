@@ -1,0 +1,10 @@
+# =========================================================================
+# FILE CẤU HÌNH MẪU DÀNH CHO LẬP TRÌNH VIÊN CHẠY DƯỚI MÁY LOCAL
+# HƯỚNG DẪN SỬ DỤNG:
+#   1. Copy file này và đổi tên thành "application-local.yml"
+#   2. Điền mã Client ID & Secret của Google của bạn vào bên dưới
+#   3. File "application-local.yml" đã được ẩn khỏi Git nên an toàn 100%
+# =========================================================================
+google:
+  client-id: "NHAP_GOOGLE_CLIENT_ID_CUA_BAN_TAI_DAY"
+  client-secret: "NHAP_GOOGLE_CLIENT_SECRET_CUA_BAN_TAI_DAY"

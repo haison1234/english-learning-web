@@ -1,0 +1,66 @@
+# =========================================================================
+# IDEs & Editor Files
+# =========================================================================
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# =========================================================================
+# Java & Spring Boot (Backend)
+# =========================================================================
+**/target/
+**/*.class
+**/*.jar
+**/*.war
+**/*.ear
+**/*.zip
+**/*.tar.gz
+**/*.rar
+**/bin/
+.gradle/
+build/
+.metadata/
+.recommenders/
+.classpath
+.project
+.settings/
+*.tmp
+*.bak
+*.log
+*.err
+log/
+logs/
+
+# =========================================================================
+# Node & React (Frontend)
+# =========================================================================
+**/node_modules/
+**/dist/
+**/build/
+.npm/
+.eslintcache
+package-lock.json
+yarn-error.log
+yarn.lock
+pnpm-lock.yaml
+
+# =========================================================================
+# Secrets & Environment Variables (CRITICAL)
+# =========================================================================
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+**/application-local.properties
+**/application-local.yml
+**/application.properties
+**/application.yml
+
