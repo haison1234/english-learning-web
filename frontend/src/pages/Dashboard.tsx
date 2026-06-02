@@ -8,9 +8,10 @@ import { UserProfile } from '../services/authService'
 interface DashboardProps {
   user: UserProfile
   onLogout: () => void
+  onNavigateLanding: () => void
 }
 
-export default function Dashboard({ user, onLogout }: DashboardProps) {
+export default function Dashboard({ user, onLogout, onNavigateLanding }: DashboardProps) {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<'my-courses' | 'all-courses'>('my-courses')
 
@@ -71,9 +72,13 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           
           {/* Logo */}
-          <span className="font-grotesk text-lg sm:text-xl uppercase tracking-wider">
-            English<span className="text-[#6FFF00]">.Learn</span>
-          </span>
+          <button 
+            onClick={onNavigateLanding}
+            className="font-grotesk text-lg sm:text-xl uppercase tracking-wider hover:opacity-80 transition-all duration-200 active:scale-95 text-left flex items-center gap-1 group"
+            title="Quay lại trang chủ"
+          >
+            <span>English</span><span className="text-[#6FFF00] group-hover:animate-pulse">.Learn</span>
+          </button>
 
           {/* Nav links */}
           <div className="hidden md:flex items-center gap-8">

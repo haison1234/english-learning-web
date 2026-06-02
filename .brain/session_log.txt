@@ -1,0 +1,4 @@
+[08:25] RUN SUCCESS: App running at http://localhost:5173
+[08:31] PORT KILLED: Port 8080 (backend) was stopped by user request.
+[08:38] RUN SUCCESS: App running at http://localhost:3000 (Vite port updated to solve Google OAuth origin mismatch).
+[08:40] RUN SUCCESS: App running at http://localhost:5173 (Vite port set back to 5173 since user authorized port 5173 in Google Console).

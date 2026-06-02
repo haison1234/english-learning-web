@@ -14,18 +14,21 @@ export default function App() {
   const [certificateOpen, setCertificateOpen] = useState(false)
   const [pricingOpen, setPricingOpen] = useState(false)
   const [user, setUser] = useState<UserProfile | null>(null)
+  const [currentView, setCurrentView] = useState<'landing' | 'dashboard'>('landing')
 
   // Retrieve user session on startup
   useEffect(() => {
     const sessionUser = getCurrentUser()
     if (sessionUser) {
       setUser(sessionUser)
+      setCurrentView('dashboard')
     }
   }, [])
 
   const handleLogout = () => {
     logoutUser()
     setUser(null)
+    setCurrentView('landing')
   }
 
   return (
@@ -42,8 +45,12 @@ export default function App() {
       />
 
       {/* ── Page sections ── */}
-      {user ? (
-        <Dashboard user={user} onLogout={handleLogout} />
+      {user && currentView === 'dashboard' ? (
+        <Dashboard 
+          user={user} 
+          onLogout={handleLogout} 
+          onNavigateLanding={() => setCurrentView('landing')} 
+        />
       ) : (
         <>
           <Hero 
@@ -53,6 +60,7 @@ export default function App() {
             onRegister={() => open('register')}
             onCertificateClick={() => setCertificateOpen(true)}
             onPricingClick={() => setPricingOpen(true)}
+            onDashboardClick={() => setCurrentView('dashboard')}
           />
           <About />
           <Collection />
@@ -67,6 +75,7 @@ export default function App() {
         onSwitch={(type) => open(type)} 
         onSuccess={(profile) => {
           setUser(profile)
+          setCurrentView('dashboard')
           close()
         }}
       />
