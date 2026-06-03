@@ -1,58 +1,39 @@
-import { SocialIconsCTA } from './SocialIcons'
+interface CTAProps {
+  onRegisterClick: () => void
+}
 
-const CTA_VIDEO =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260331_055729_72d66327-b59e-4ae9-bb70-de6ccb5ecdb0.mp4'
-
-export default function CTA() {
+export default function CTA({ onRegisterClick }: CTAProps) {
   return (
-    <section id="contact" className="relative w-full overflow-hidden">
-      {/* ── Video: native aspect ratio (NOT object-cover) ── */}
-      <video
-        src={CTA_VIDEO}
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="w-full h-auto block"
-      />
+    <section id="contact" className="w-full bg-deepNavy py-16 md:py-20 relative overflow-hidden">
+      {/* Decorative background glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-actionBlue/10 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* ── Absolute overlay: text block (right-aligned) ── */}
-      <div className="absolute inset-0 flex items-center lg:pr-[20%] lg:pl-[15%] px-6 sm:px-10 md:px-16">
-        <div className="relative ml-auto w-full lg:w-auto">
-
-          {/* "Go beyond" cursive */}
-          <span
-            className="font-condiment text-[#6FFF00] absolute pointer-events-none"
-            style={{
-              fontSize: 'clamp(17px, 4vw, 68px)',
-              top: '-0.8em',
-              left: 0,
-              mixBlendMode: 'exclusion',
-            }}
+      <div className="relative z-10 max-w-[1440px] mx-auto px-6 sm:px-8 md:px-12 text-center flex flex-col items-center">
+        <span className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-3">
+          Sẵn sàng bứt phá?
+        </span>
+        <h2 className="font-poppins text-white text-3xl sm:text-4xl font-bold tracking-tight max-w-2xl leading-tight">
+          Bắt Đầu Hành Trình Chinh Phục Tiếng Anh Ngay Hôm Nay
+        </h2>
+        <p className="text-white/70 text-sm mt-4 max-w-xl leading-relaxed">
+          Tham gia cùng hơn 50.000+ học viên đang bứt phá điểm số và phát âm chuẩn Mỹ mỗi ngày trên phòng luyện thi ảo.
+        </p>
+        
+        <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
+          <button
+            onClick={onRegisterClick}
+            className="w-full sm:w-auto px-8 py-3.5 bg-white text-actionBlue hover:bg-offWhite1 active:scale-95 font-semibold text-sm rounded-[999px] shadow-l2 transition-all duration-200"
           >
-            Go beyond
-          </span>
-
-          {/* Main heading */}
-          <h2
-            className="font-grotesk text-[#EFF4FF] uppercase text-right lg:text-left"
-            style={{ fontSize: 'clamp(16px, 4vw, 60px)', lineHeight: 1.0 }}
+            Đăng ký học thử miễn phí
+          </button>
+          
+          <a
+            href="#courses"
+            className="w-full sm:w-auto px-8 py-3.5 border border-white/20 text-white hover:bg-white/10 active:scale-95 font-semibold text-sm rounded-[999px] transition-all duration-200"
           >
-            <span className="block mb-4 sm:mb-6 md:mb-8 lg:mb-12">JOIN US.</span>
-            <span className="block">LEARN WHAT'S</span>
-            <span className="block">POSSIBLE.</span>
-            <span className="block">DEFINE YOUR NEXT.</span>
-            <span className="block">FOLLOW THE PATH.</span>
-          </h2>
+            Khám phá lộ trình học
+          </a>
         </div>
-      </div>
-
-      {/* ── Social icons – bottom-left, absolute ── */}
-      <div
-        className="absolute left-[8%] hidden sm:flex"
-        style={{ bottom: 'clamp(12%, 15%, 20%)' }}
-      >
-        <SocialIconsCTA />
       </div>
     </section>
   )

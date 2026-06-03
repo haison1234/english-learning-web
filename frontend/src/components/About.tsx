@@ -1,99 +1,67 @@
-const ABOUT_VIDEO =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260331_151551_992053d1-3d3e-4b8c-abac-45f22158f411.mp4'
-
-const DECO_TEXT =
-  'A journey to mastery beyond time and place. An exploration of language, form, and silence in sound.'
+import { Sparkles, Compass, CheckCircle2, BarChart3 } from 'lucide-react'
 
 export default function About() {
+  const features = [
+    {
+      icon: Compass,
+      title: 'Phòng Luyện Thi Ảo (Virtual Room)',
+      desc: 'Môi trường thực hành Speaking & Writing đột phá. Đánh giá ngay lập tức, sửa đổi cách phát âm từng chữ và gợi ý cấu trúc ngữ pháp nâng cao.',
+    },
+    {
+      icon: CheckCircle2,
+      title: 'Lộ Trình Học Cá Nhân Hóa',
+      desc: 'Giáo trình được chia tách tinh gọn theo cấp độ từ Beginner đến Advanced. Giúp bạn tập trung cải thiện đúng những kỹ năng còn yếu.',
+    },
+    {
+      icon: Sparkles,
+      title: 'Bài Tập Tương Tác Đa Dạng',
+      desc: 'Không chỉ học lý thuyết, bạn được rèn luyện thực hành qua trắc nghiệm, điền khuyết và ghép cặp thông minh để nhớ bài sâu sắc ngay tại lớp.',
+    },
+    {
+      icon: BarChart3,
+      title: 'Theo Dõi Tiến Độ Trực Quan',
+      desc: 'Dashboard báo cáo chi tiết thời lượng học, chuỗi streak hàng ngày và tiến trình hoàn thành khóa học để duy trì thói quen học tập kỷ luật.',
+    },
+  ]
+
   return (
-    <section id="about" className="relative w-full min-h-screen overflow-hidden">
-      {/* ── Full-bleed video background ── */}
-      <video
-        src={ABOUT_VIDEO}
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-
-      {/* ── Content container ── */}
-      <div className="relative z-10 max-w-[1831px] mx-auto px-5 sm:px-8 md:px-12 lg:px-16 py-16 sm:py-20 md:py-24 flex flex-col justify-between min-h-screen">
-
-        {/* ── TOP ROW ── */}
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10 lg:gap-0">
-
-          {/* Left: Heading */}
-          <div className="relative">
-            <h2
-              className="font-grotesk text-[#EFF4FF] uppercase"
-              style={{ fontSize: 'clamp(32px, 5vw, 60px)', lineHeight: 1.05 }}
-            >
-              Hello!
-              <br />
-              I'm English.Learn
-            </h2>
-
-            {/* Cursive overlay "Orbis"-style */}
-            <span
-              className="font-condiment text-[#6FFF00] absolute pointer-events-none"
-              style={{
-                fontSize: 'clamp(36px, 5vw, 68px)',
-                bottom: '-0.3em',
-                right: '-0.5em',
-                rotate: '4deg',
-                mixBlendMode: 'exclusion',
-              }}
-            >
-              Learn
-            </span>
-          </div>
-
-          {/* Right: Short description */}
-          <p
-            className="font-mono text-[#EFF4FF] uppercase"
-            style={{ fontSize: 'clamp(14px, 1.2vw, 16px)', maxWidth: 266, lineHeight: 1.7 }}
-          >
-            A digital journey fixed beyond time and place. An exploration of language, form, and silence in speech.
+    <section id="about" className="bg-[#FFFFFF] py-20 border-b border-grayBorder">
+      <div className="max-w-[1440px] mx-auto px-6 sm:px-8 md:px-12">
+        {/* Section Heading */}
+        <div className="text-center max-w-2xl mx-auto mb-16">
+          <span className="text-actionBlue font-poppins text-xs font-semibold tracking-widest uppercase bg-actionBlue/5 px-4 py-1.5 rounded-[999px]">
+            Lý do chọn English.Learn
+          </span>
+          <h2 className="font-poppins text-brandDark text-3xl md:text-4xl font-bold tracking-tight mt-4">
+            Phương Pháp Học Tiếng Anh Toàn Diện & Tinh Gọn
+          </h2>
+          <p className="text-secondaryText text-sm mt-3">
+            Chúng tôi mang lại giải pháp học tập chuẩn hóa, kết hợp giữa bài giảng chuyên sâu và hệ thống luyện tập ảo phản hồi tức thì.
           </p>
         </div>
 
-        {/* ── BOTTOM ROW ── */}
-        <div className="flex flex-row items-end justify-between mt-12 lg:mt-0">
-
-          {/* Left deco column */}
-          <div className="flex flex-col gap-4">
-            <p
-              className="font-mono uppercase opacity-10 text-[#010828] lg:text-[#EFF4FF]"
-              style={{ fontSize: 'clamp(11px, 1vw, 14px)', maxWidth: 266, lineHeight: 1.7 }}
-            >
-              {DECO_TEXT}
-            </p>
-            <p
-              className="font-mono uppercase opacity-10 text-[#010828] lg:text-[#EFF4FF]"
-              style={{ fontSize: 'clamp(11px, 1vw, 14px)', maxWidth: 266, lineHeight: 1.7 }}
-            >
-              {DECO_TEXT}
-            </p>
-          </div>
-
-          {/* Right deco column – hidden below lg */}
-          <div className="hidden lg:flex flex-col gap-4 text-right">
-            <p
-              className="font-mono uppercase opacity-10 text-[#EFF4FF]"
-              style={{ fontSize: 'clamp(11px, 1vw, 14px)', maxWidth: 266, lineHeight: 1.7 }}
-            >
-              {DECO_TEXT}
-            </p>
-            <p
-              className="font-mono uppercase opacity-10 text-[#EFF4FF]"
-              style={{ fontSize: 'clamp(11px, 1vw, 14px)', maxWidth: 266, lineHeight: 1.7 }}
-            >
-              {DECO_TEXT}
-            </p>
-          </div>
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {features.map((feat, index) => {
+            const Icon = feat.icon
+            return (
+              <div
+                key={index}
+                className="bg-white border border-grayBorder rounded-[16px] p-6 shadow-l1 hover:shadow-l2 hover:-translate-y-1 transition-all duration-300 flex flex-col items-start"
+              >
+                <div className="w-12 h-12 rounded-[12px] bg-actionBlue/5 flex items-center justify-center text-actionBlue mb-5 border border-actionBlue/10">
+                  <Icon size={24} />
+                </div>
+                <h3 className="font-poppins text-brandDark text-base font-bold mb-2">
+                  {feat.title}
+                </h3>
+                <p className="text-secondaryText text-xs leading-relaxed">
+                  {feat.desc}
+                </p>
+              </div>
+            )
+          })}
         </div>
-
       </div>
     </section>
   )
