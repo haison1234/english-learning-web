@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { X, Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
-import { loginWithGoogle, UserProfile } from '../services/authService'
+import { loginWithGoogle, loginUser, registerUser, UserProfile } from '../services/authService'
 
 type ModalType = 'login' | 'register' | null
 
@@ -22,6 +22,11 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
   const [showPw2, setShowPw2] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   const handleGoogleLogin = () => {
     setError(null)
@@ -75,72 +80,118 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
 
   const isLogin = type === 'login'
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    if (isLogin) {
+      if (!email.trim() || !password.trim()) {
+        setError('Vui lòng nhập đầy đủ Email và Mật khẩu!')
+        return
+      }
+
+      setIsLoading(true)
+      try {
+        const authData = await loginUser(email.trim(), password)
+        onSuccess(authData.user)
+      } catch (err: any) {
+        setError(err.message || 'Đăng nhập thất bại!')
+      } finally {
+        setIsLoading(false)
+      }
+    } else {
+      if (!fullName.trim() || !email.trim() || !password.trim()) {
+        setError('Vui lòng điền đầy đủ các thông tin!')
+        return
+      }
+
+      if (password !== confirmPassword) {
+        setError('Mật khẩu xác nhận không khớp!')
+        return
+      }
+
+      setIsLoading(true)
+      try {
+        const authData = await registerUser(fullName.trim(), email.trim(), password)
+        onSuccess(authData.user)
+      } catch (err: any) {
+        setError(err.message || 'Đăng ký thất bại!')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+  }
+
   return (
-    /* Backdrop */
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center"
-      style={{ background: 'rgba(1,8,40,0.75)', backdropFilter: 'blur(8px)' }}
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-brandDark/40 backdrop-blur-sm"
       onClick={onClose}
     >
       {/* Modal card */}
       <div
-        className="liquid-glass rounded-[28px] w-full max-w-md mx-4 p-8 relative"
+        className="bg-white shadow-l3 border border-grayBorder rounded-[28px] w-full max-w-md mx-4 p-8 relative animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
+          className="absolute top-5 right-5 w-9 h-9 rounded-full flex items-center justify-center text-secondaryText hover:bg-offWhite1 hover:text-brandDark transition-colors"
         >
-          <X size={18} className="text-[#EFF4FF]" />
+          <X size={18} />
         </button>
 
         {/* Header */}
-        <div className="mb-8">
-          <p className="font-condiment text-[#6FFF00] text-2xl mb-1">
+        <div className="mb-6">
+          <p className="font-poppins text-actionBlue text-sm font-semibold tracking-wider uppercase mb-1">
             {isLogin ? 'Welcome back' : 'Get started'}
           </p>
-          <h2 className="font-grotesk text-[#EFF4FF] text-3xl uppercase">
-            {isLogin ? 'Đăng nhập' : 'Đăng ký'}
+          <h2 className="font-poppins text-brandDark text-2xl font-bold tracking-tight">
+            {isLogin ? 'Đăng nhập' : 'Đăng ký tài khoản'}
           </h2>
         </div>
 
         {/* Form */}
-        <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           {/* Name – only on register */}
           {!isLogin && (
             <div className="relative">
-              <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#EFF4FF]/40" />
+              <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-secondaryText/60" />
               <input
                 type="text"
                 placeholder="Họ và tên"
-                className="w-full bg-white/5 border border-white/10 rounded-[14px] py-3.5 pl-10 pr-4 text-[#EFF4FF] font-mono text-sm placeholder:text-[#EFF4FF]/30 focus:outline-none focus:border-[#6FFF00]/50 transition-colors"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full bg-white border border-grayBorder text-brandDark focus:border-actionBlue focus:ring-4 focus:ring-actionBlue/10 focus:outline-none placeholder:text-darkGrayBorder rounded-lg py-3.5 pl-10 pr-4 text-sm transition-all"
               />
             </div>
           )}
 
           {/* Email */}
           <div className="relative">
-            <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#EFF4FF]/40" />
+            <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-secondaryText/60" />
             <input
               type="email"
               placeholder="Email"
-              className="w-full bg-white/5 border border-white/10 rounded-[14px] py-3.5 pl-10 pr-4 text-[#EFF4FF] font-mono text-sm placeholder:text-[#EFF4FF]/30 focus:outline-none focus:border-[#6FFF00]/50 transition-colors"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-white border border-grayBorder text-brandDark focus:border-actionBlue focus:ring-4 focus:ring-actionBlue/10 focus:outline-none placeholder:text-darkGrayBorder rounded-lg py-3.5 pl-10 pr-4 text-sm transition-all"
             />
           </div>
 
           {/* Password */}
           <div className="relative">
-            <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#EFF4FF]/40" />
+            <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-secondaryText/60" />
             <input
               type={showPw ? 'text' : 'password'}
               placeholder="Mật khẩu"
-              className="w-full bg-white/5 border border-white/10 rounded-[14px] py-3.5 pl-10 pr-11 text-[#EFF4FF] font-mono text-sm placeholder:text-[#EFF4FF]/30 focus:outline-none focus:border-[#6FFF00]/50 transition-colors"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-white border border-grayBorder text-brandDark focus:border-actionBlue focus:ring-4 focus:ring-actionBlue/10 focus:outline-none placeholder:text-darkGrayBorder rounded-lg py-3.5 pl-10 pr-11 text-sm transition-all"
             />
             <button
               type="button"
               onClick={() => setShowPw((p) => !p)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#EFF4FF]/40 hover:text-[#EFF4FF]/70 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-secondaryText hover:text-brandDark transition-colors"
             >
               {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -149,16 +200,18 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
           {/* Confirm Password – only on register */}
           {!isLogin && (
             <div className="relative">
-              <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#EFF4FF]/40" />
+              <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-secondaryText/60" />
               <input
                 type={showPw2 ? 'text' : 'password'}
                 placeholder="Xác nhận mật khẩu"
-                className="w-full bg-white/5 border border-white/10 rounded-[14px] py-3.5 pl-10 pr-11 text-[#EFF4FF] font-mono text-sm placeholder:text-[#EFF4FF]/30 focus:outline-none focus:border-[#6FFF00]/50 transition-colors"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full bg-white border border-grayBorder text-brandDark focus:border-actionBlue focus:ring-4 focus:ring-actionBlue/10 focus:outline-none placeholder:text-darkGrayBorder rounded-lg py-3.5 pl-10 pr-11 text-sm transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowPw2((p) => !p)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#EFF4FF]/40 hover:text-[#EFF4FF]/70 transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-secondaryText hover:text-brandDark transition-colors"
               >
                 {showPw2 ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -168,7 +221,7 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
           {/* Forgot password – login only */}
           {isLogin && (
             <div className="text-right -mt-1">
-              <button type="button" className="font-mono text-xs text-[#EFF4FF]/40 hover:text-[#6FFF00] transition-colors uppercase">
+              <button type="button" className="text-xs text-secondaryText hover:text-actionBlue transition-colors font-medium">
                 Quên mật khẩu?
               </button>
             </div>
@@ -176,7 +229,7 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
 
           {/* Error Message */}
           {error && (
-            <div className="bg-[#EA4335]/15 border border-[#EA4335]/35 rounded-[14px] p-3.5 text-[#EA4335] font-mono text-xs text-center my-1">
+            <div className="bg-[#FFE5E5] border border-[#FF6B6B]/40 rounded-lg p-3 text-[#FF6B6B] text-xs text-center font-medium my-1">
               {error}
             </div>
           )}
@@ -185,17 +238,16 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
           <button
             type="submit"
             disabled={isLoading}
-            className="mt-2 w-full py-4 rounded-[14px] font-grotesk text-[#010828] text-sm uppercase tracking-wider transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ background: '#6FFF00' }}
+            className="mt-2 w-full py-3.5 bg-actionBlue hover:bg-actionBlueHover active:bg-actionBlueActive text-white rounded-[999px] font-semibold text-sm tracking-wide transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Đang xử lý...' : (isLogin ? 'Đăng nhập' : 'Tạo tài khoản')}
+            {isLoading ? 'Đang xử lý...' : (isLogin ? 'Đăng nhập' : 'Đăng ký')}
           </button>
 
           {/* Divider */}
           <div className="flex items-center gap-3 my-1">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="font-mono text-[11px] text-[#EFF4FF]/30 uppercase">hoặc</span>
-            <div className="flex-1 h-px bg-white/10" />
+            <div className="flex-1 h-px bg-grayBorder" />
+            <span className="text-[11px] text-secondaryText uppercase tracking-wider font-semibold">hoặc</span>
+            <div className="flex-1 h-px bg-grayBorder" />
           </div>
 
           {/* Google OAuth Button */}
@@ -203,7 +255,7 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
             type="button"
             onClick={handleGoogleLogin}
             disabled={isLoading}
-            className="w-full py-3.5 rounded-[14px] border border-white/10 font-mono text-sm text-[#EFF4FF]/70 hover:bg-white/5 transition-colors flex items-center justify-center gap-3 uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 bg-white border border-grayBorder text-brandDark hover:bg-offWhite1 hover:text-brandDark rounded-[999px] font-semibold text-sm transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg width="18" height="18" viewBox="0 0 48 48">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -216,11 +268,11 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
         </form>
 
         {/* Switch */}
-        <p className="mt-6 text-center font-mono text-xs text-[#EFF4FF]/40 uppercase">
+        <p className="mt-6 text-center text-xs text-secondaryText">
           {isLogin ? 'Chưa có tài khoản?' : 'Đã có tài khoản?'}{' '}
           <button
             onClick={() => onSwitch(isLogin ? 'register' : 'login')}
-            className="text-[#6FFF00] hover:underline"
+            className="text-actionBlue hover:underline font-semibold"
           >
             {isLogin ? 'Đăng ký ngay' : 'Đăng nhập'}
           </button>
@@ -230,7 +282,6 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
   )
 }
 
-// ── Export hook + modal component ──
 export function useAuthModal() {
   const [modal, setModal] = useState<ModalType>(null)
   return { modal, open: setModal, close: () => setModal(null) }

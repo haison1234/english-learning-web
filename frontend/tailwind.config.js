@@ -7,27 +7,33 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#010828',
-        cream: '#EFF4FF',
-        neon: '#6FFF00',
+        brandDark: '#23242D',
+        actionBlue: '#0060FD',
+        actionBlueHover: '#004FD8',
+        actionBlueActive: '#003FA8',
+        actionBlueVariant: '#0071F9',
+        deepNavy: '#233876',
+        mediumBlue: '#1F242E',
+        secondaryText: '#566681',
+        grayBorder: '#E5E7EB',
+        darkGrayBorder: '#D1D5DB',
+        offWhite1: '#F9FAFB',
+        offWhite2: '#F7FAFC',
+        offWhite3: '#FAFCFE',
+        warningPrimary: '#FFCC00',
+        warningSecondary: '#FF9F00',
+        successGreenBg: '#E8F5E9',
+        successGreenText: '#2E7D32',
       },
       fontFamily: {
-        // "font-grotesk" → Anton (headings, nav)
-        grotesk: ['Anton', 'sans-serif'],
-        // "font-condiment" → Condiment (cursive accents)
-        condiment: ['Condiment', 'cursive'],
-        // "font-mono" → system monospace (body paragraphs)
-        mono: [
-          'ui-monospace',
-          'SFMono-Regular',
-          'Menlo',
-          'Monaco',
-          'Consolas',
-          '"Liberation Mono"',
-          '"Courier New"',
-          'monospace',
-        ],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        poppins: ['Poppins', 'SVN-Poppins', 'sans-serif'],
       },
+      boxShadow: {
+        l1: 'rgba(31, 36, 46, 0.1) 0px 4px 24px 0px',
+        l2: 'rgba(31, 36, 46, 0.15) 0px 8px 32px 0px',
+        l3: 'rgba(31, 36, 46, 0.2) 0px 12px 48px 0px',
+      }
     },
   },
   plugins: [],

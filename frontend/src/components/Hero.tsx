@@ -1,7 +1,7 @@
-import { SocialIconsDesktop, SocialIconsMobile } from './SocialIcons'
+import { useState, useEffect } from 'react'
+import { User, Menu, X, ArrowRight, Award, CheckCircle } from 'lucide-react'
 import { UserProfile } from '../services/authService'
 
-// ── Props nhận từ App ──
 interface HeroProps {
   user: UserProfile | null
   onLogout: () => void
@@ -9,185 +9,350 @@ interface HeroProps {
   onRegister: () => void
   onCertificateClick: () => void
   onPricingClick: () => void
+  onDashboardClick?: () => void
 }
 
-const HERO_VIDEO =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260331_045634_e1c98c76-1265-4f5c-882a-4276f2080894.mp4'
+export default function Hero({
+  user,
+  onLogout,
+  onLogin,
+  onRegister,
+  onCertificateClick,
+  onPricingClick,
+  onDashboardClick,
+}: HeroProps) {
+  const [scrolled, setScrolled] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
 
-export default function Hero({ user, onLogout, onLogin, onRegister, onCertificateClick, onPricingClick }: HeroProps) {
-  const handleNavClick = (link: string, e: React.MouseEvent) => {
+  // Track window scroll to make header background solid
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setScrolled(true)
+      } else {
+        setScrolled(false)
+      }
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const handleNavClick = (targetId: string, e: React.MouseEvent) => {
     e.preventDefault()
-    if (link === 'Homepage') {
+    setMobileMenuOpen(false)
+    if (targetId === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' })
-    } else if (link === 'Courses') {
-      document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })
-    } else if (link === 'Certificate') {
+    } else if (targetId === 'certificate') {
       onCertificateClick()
-    } else if (link === 'Pricing') {
+    } else if (targetId === 'pricing') {
       onPricingClick()
-    } else if (link === 'Contact') {
-      document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })
+    } else {
+      const el = document.getElementById(targetId)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
     }
   }
 
   return (
-    <section id="home" className="relative w-full h-screen overflow-hidden rounded-b-[32px]">
-      {/* ── Full-bleed video background ── */}
-      <video
-        src={HERO_VIDEO}
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-
-      {/* ── Content container ── */}
-      <div className="relative z-10 flex flex-col h-full max-w-[1831px] mx-auto px-5 sm:px-8 md:px-12 lg:px-16">
-
-        {/* ── HEADER ── */}
-        <header className="flex items-center justify-between pt-8 lg:pt-10">
-
+    <section id="home" className="relative w-full bg-offWhite1 overflow-hidden min-h-screen flex flex-col">
+      {/* ── HEADER ── */}
+      <header
+        className={`fixed top-0 left-0 right-0 h-18 z-50 transition-all duration-300 flex items-center ${
+          scrolled ? 'bg-white shadow-l1 border-b border-grayBorder' : 'bg-transparent'
+        }`}
+      >
+        <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-8 md:px-12 flex items-center justify-between">
           {/* Logo */}
-          <span className="font-grotesk text-[#EFF4FF] text-[16px] uppercase tracking-wide">
-            English<span className="text-[#6FFF00]">.Learn</span>
-          </span>
+          <button
+            onClick={() => user ? onDashboardClick?.() : window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="font-poppins text-brandDark text-xl font-bold tracking-tight hover:opacity-80 active:scale-95 transition-all text-left flex items-center gap-1.5"
+          >
+            <span className="text-actionBlue">English</span>
+            <span className="text-brandDark">.Learn</span>
+          </button>
 
-          {/* Nav + Auth buttons – desktop only */}
+          {/* Navigation Links (Desktop) */}
+          <nav className="hidden lg:flex items-center gap-8">
+            {[
+              { label: 'Trang chủ', id: 'home' },
+              { label: 'Khóa học', id: 'courses' },
+              { label: 'Tra cứu chứng chỉ', id: 'certificate' },
+              { label: 'Bảng giá', id: 'pricing' },
+              { label: 'Giới thiệu', id: 'about' },
+            ].map((link) => (
+              <a
+                key={link.id}
+                href={`#${link.id}`}
+                onClick={(e) => handleNavClick(link.id, e)}
+                className="text-brandDark hover:text-actionBlue font-medium text-sm transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
+          {/* Auth & CTAs (Desktop) */}
           <div className="hidden lg:flex items-center gap-4">
-            <nav className="liquid-glass flex items-center gap-8 rounded-[28px] px-[40px] py-[20px]">
-              {['Homepage', 'Courses', 'Certificate', 'Pricing', 'Contact'].map((link) => (
-                <a
-                  key={link}
-                  href={`#${link.toLowerCase()}`}
-                  onClick={(e) => handleNavClick(link, e)}
-                  className="font-grotesk text-[#EFF4FF] text-[13px] uppercase hover:text-[#6FFF00] transition-colors duration-200"
-                >
-                  {link}
-                </a>
-              ))}
-            </nav>
-
-            {/* Auth status */}
             {user ? (
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 rounded-[28px] px-4 py-[14px] liquid-glass border border-[#6FFF00]/20">
+              <div className="relative">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2.5 px-4 py-2 rounded-[999px] bg-white border border-grayBorder hover:bg-offWhite1 hover:border-darkGrayBorder transition-all active:scale-95"
+                >
                   {user.avatarUrl ? (
-                    <img 
-                      src={user.avatarUrl} 
-                      alt={user.fullName} 
-                      className="w-7 h-7 rounded-full border border-[#6FFF00]/30 object-cover"
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.fullName}
+                      className="w-6 h-6 rounded-full object-cover border border-grayBorder"
                     />
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-[#6FFF00]/10 border border-[#6FFF00]/30 flex items-center justify-center text-[#6FFF00] font-grotesk text-xs uppercase">
-                      {user.fullName.charAt(0)}
+                    <div className="w-6 h-6 rounded-full bg-actionBlue/10 flex items-center justify-center text-actionBlue font-semibold text-xs">
+                      {user.fullName.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <span className="font-grotesk text-[#EFF4FF] text-[13px] max-w-[120px] truncate">
+                  <span className="text-brandDark font-semibold text-sm max-w-[120px] truncate">
                     {user.fullName}
                   </span>
-                </div>
-                <button
-                  onClick={onLogout}
-                  className="font-grotesk text-[#EFF4FF]/70 hover:text-[#6FFF00] text-[13px] uppercase px-5 py-[18px] rounded-[28px] hover:bg-white/5 transition-colors duration-200"
-                >
-                  Đăng xuất
                 </button>
+
+                {dropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-56 rounded-[16px] bg-white border border-grayBorder p-2 shadow-l3 z-20 animate-in fade-in slide-in-from-top-2 duration-150">
+                      <div className="px-4 py-2.5 border-b border-grayBorder">
+                        <p className="text-[10px] text-secondaryText uppercase tracking-widest font-bold">Học viên</p>
+                        <p className="text-sm font-semibold text-brandDark truncate mt-0.5">{user.fullName}</p>
+                        <p className="text-xs text-secondaryText truncate">{user.email}</p>
+                      </div>
+                      
+                      <button
+                        onClick={() => {
+                          setDropdownOpen(false)
+                          onDashboardClick?.()
+                        }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 mt-1 text-sm text-brandDark hover:text-actionBlue hover:bg-offWhite1 rounded-lg transition-colors text-left font-medium"
+                      >
+                        Vào học ngay
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setDropdownOpen(false)
+                          onLogout()
+                        }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 mt-0.5 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors text-left font-medium"
+                      >
+                        Đăng xuất
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={onLogin}
-                  className="liquid-glass font-grotesk text-[#EFF4FF] text-[13px] uppercase px-6 py-[18px] rounded-[28px] hover:bg-white/10 transition-colors duration-200"
+                  className="px-5 py-2 text-brandDark hover:text-actionBlue font-semibold text-sm transition-colors"
                 >
                   Đăng nhập
                 </button>
                 <button
                   onClick={onRegister}
-                  className="font-grotesk text-[#010828] text-[13px] uppercase px-6 py-[18px] rounded-[28px] hover:brightness-110 transition-all duration-200"
-                  style={{ background: '#6FFF00' }}
+                  className="px-5 py-2 bg-actionBlue hover:bg-actionBlueHover active:bg-actionBlueActive text-white font-semibold text-sm rounded-[999px] shadow-l1 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
-                  Đăng ký
+                  Đăng ký miễn phí
                 </button>
               </div>
             )}
           </div>
 
-          {/* Desktop social icons – top-right */}
-          <div className="hidden lg:flex">
-            <SocialIconsDesktop />
+          {/* Hamburger Menu Icon (Mobile) */}
+          <div className="flex lg:hidden items-center gap-4">
+            {user && (
+              <button
+                onClick={onDashboardClick}
+                className="px-3.5 py-1.5 bg-actionBlue text-white font-semibold text-xs rounded-[999px] uppercase"
+              >
+                Học ngay
+              </button>
+            )}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 text-brandDark hover:bg-offWhite2 rounded-lg transition-colors"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
+        </div>
+      </header>
 
-          {/* Mobile: auth status */}
-          <div className="flex lg:hidden items-center gap-2">
+      {/* Mobile Navigation Dropdown */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 bg-white pt-20 px-6 flex flex-col gap-6 animate-in slide-in-from-right duration-200">
+          <nav className="flex flex-col gap-5">
+            {[
+              { label: 'Trang chủ', id: 'home' },
+              { label: 'Khóa học', id: 'courses' },
+              { label: 'Tra cứu chứng chỉ', id: 'certificate' },
+              { label: 'Bảng giá', id: 'pricing' },
+              { label: 'Giới thiệu', id: 'about' },
+            ].map((link) => (
+              <a
+                key={link.id}
+                href={`#${link.id}`}
+                onClick={(e) => handleNavClick(link.id, e)}
+                className="text-brandDark font-semibold text-base py-2 border-b border-grayBorder"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
+          <div className="mt-4 flex flex-col gap-3">
             {user ? (
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full border border-[#6FFF00]/30 overflow-hidden flex items-center justify-center bg-white/5">
-                  {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-[#6FFF00] font-grotesk text-xs uppercase">{user.fullName.charAt(0)}</span>
-                  )}
-                </div>
-                <button
-                  onClick={onLogout}
-                  className="liquid-glass font-grotesk text-[#EFF4FF] text-[11px] uppercase px-3 py-2 rounded-[16px]"
-                >
-                  Thoát
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false)
+                  onLogout()
+                }}
+                className="w-full py-3 border border-darkGrayBorder text-red-500 rounded-[999px] font-semibold text-sm text-center"
+              >
+                Đăng xuất
+              </button>
             ) : (
               <>
                 <button
-                  onClick={onLogin}
-                  className="liquid-glass font-grotesk text-[#EFF4FF] text-[11px] uppercase px-4 py-2.5 rounded-[20px] hover:bg-white/10 transition-colors"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    onLogin()
+                  }}
+                  className="w-full py-3 border border-darkGrayBorder text-brandDark rounded-[999px] font-semibold text-sm text-center"
                 >
                   Đăng nhập
                 </button>
                 <button
-                  onClick={onRegister}
-                  className="font-grotesk text-[#010828] text-[11px] uppercase px-4 py-2.5 rounded-[20px]"
-                  style={{ background: '#6FFF00' }}
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    onRegister()
+                  }}
+                  className="w-full py-3 bg-actionBlue text-white rounded-[999px] font-semibold text-sm text-center shadow-l1"
                 >
                   Đăng ký
                 </button>
               </>
             )}
           </div>
-        </header>
+        </div>
+      )}
 
-        {/* ── HERO BODY ── */}
-        <div className="flex flex-1 flex-col justify-end pb-12 sm:pb-16 md:pb-20 lg:pb-24">
-          <div className="relative lg:ml-32" style={{ maxWidth: 780 }}>
+      {/* ── HERO BODY SECTION ── */}
+      <div className="flex-1 flex items-center pt-24 pb-16 md:py-32">
+        <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-8 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Left Column: Heading, Subtitle & Key Benefits */}
+          <div className="lg:col-span-6 flex flex-col items-start">
+            <span className="text-actionBlue font-poppins text-xs font-bold tracking-widest uppercase mb-3.5 bg-actionBlue/5 px-3 py-1.5 rounded-[999px] flex items-center gap-1.5">
+              <CheckCircle size={14} /> HỌC TẬP THÔNG MINH - ĐỘT PHÁ ĐIỂM SỐ
+            </span>
 
-            {/* Main heading */}
-            <h1
-              className="font-grotesk text-[#EFF4FF] uppercase leading-[1.05] lg:leading-[1]"
-              style={{ fontSize: 'clamp(40px, 7vw, 90px)' }}
-            >
-              Beyond words
-              <br />
-              and ( its ) familiar
-              <br />
-              boundaries
+            <h1 className="font-poppins text-brandDark text-4xl sm:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-tight mb-5">
+              Học Tiếng Anh Hiệu Quả Với <span className="text-actionBlue">Phòng Luyện Thi Ảo</span>
             </h1>
 
-            {/* Cursive accent overlay */}
-            <span
-              className="font-condiment text-[#6FFF00] absolute -rotate-1 opacity-90 pointer-events-none"
-              style={{
-                fontSize: 'clamp(24px, 3.5vw, 48px)',
-                right: '-5%',
-                top: '10%',
-                mixBlendMode: 'exclusion',
-              }}
-            >
-              English collection
-            </span>
+            <p className="text-secondaryText text-sm sm:text-base leading-relaxed max-w-xl mb-8">
+              Nền tảng E-Learning tiếng Anh chuẩn Prep.vn. Luyện phát âm chuẩn Mỹ, làm đề thi thử không giới hạn và nhận phản hồi chấm chữa lập tức từ AI thông minh.
+            </p>
+
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+              <button
+                onClick={user ? onDashboardClick : onRegister}
+                className="w-full sm:w-auto px-8 py-4 bg-actionBlue hover:bg-actionBlueHover active:bg-actionBlueActive text-white font-bold text-sm rounded-[999px] shadow-l1 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              >
+                <span>Học thử miễn phí ngay</span>
+                <ArrowRight size={16} />
+              </button>
+              
+              <button
+                onClick={() => handleNavClick('courses', {} as any)}
+                className="w-full sm:w-auto px-8 py-4 text-brandDark hover:text-actionBlue font-semibold text-sm transition-colors border border-transparent hover:border-grayBorder rounded-[999px]"
+              >
+                Xem danh sách khóa học
+              </button>
+            </div>
+
+            {/* Micro Stats Banner */}
+            <div className="flex items-center gap-8 mt-12 border-t border-grayBorder pt-6 w-full lg:w-auto justify-around sm:justify-start">
+              <div>
+                <p className="font-poppins text-brandDark text-2xl font-bold">50,000+</p>
+                <p className="text-secondaryText text-[11px] font-semibold uppercase tracking-wider">Học viên tin dùng</p>
+              </div>
+              <div className="border-l border-grayBorder h-8" />
+              <div>
+                <p className="font-poppins text-brandDark text-2xl font-bold">95.4%</p>
+                <p className="text-secondaryText text-[11px] font-semibold uppercase tracking-wider">Đạt mục tiêu đầu ra</p>
+              </div>
+              <div className="border-l border-grayBorder h-8" />
+              <div>
+                <p className="font-poppins text-brandDark text-2xl font-bold">24/7</p>
+                <p className="text-secondaryText text-[11px] font-semibold uppercase tracking-wider">Phản hồi phòng ảo</p>
+              </div>
+            </div>
           </div>
 
-          {/* Mobile social icons */}
-          <SocialIconsMobile />
+          {/* Right Column: Illustration Mockup */}
+          <div className="lg:col-span-6 flex justify-center lg:justify-end relative">
+            {/* Background elements */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-actionBlue/10 rounded-full blur-[80px] pointer-events-none" />
+
+            {/* Clean Illustration Mocking Study Room */}
+            <div className="relative bg-white border border-grayBorder shadow-l2 rounded-[24px] p-6 max-w-lg w-full">
+              {/* Fake UI Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-grayBorder mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3.5 h-3.5 rounded-full bg-red-400" />
+                  <div className="w-3.5 h-3.5 rounded-full bg-yellow-400" />
+                  <div className="w-3.5 h-3.5 rounded-full bg-green-400" />
+                </div>
+                <div className="bg-offWhite1 border border-grayBorder rounded-md px-3 py-1 text-[10px] text-secondaryText font-mono">
+                  speaking-room.english-learn.vn
+                </div>
+              </div>
+
+              {/* Fake UI Body */}
+              <div className="space-y-4">
+                <div className="bg-actionBlue/5 border border-actionBlue/10 rounded-xl p-4">
+                  <p className="text-xs text-actionBlue font-bold uppercase mb-1">Đề bài:</p>
+                  <p className="text-xs text-brandDark font-medium leading-relaxed">
+                    "Describe a memorable journey you have taken in your life."
+                  </p>
+                </div>
+
+                <div className="bg-offWhite1 border border-grayBorder rounded-xl p-4 relative overflow-hidden">
+                  <p className="text-xs text-secondaryText uppercase tracking-wider font-bold mb-2">Đánh giá phát âm từ AI:</p>
+                  <div className="flex flex-wrap gap-1">
+                    <span className="text-xs text-successGreenText bg-successGreenBg/40 px-2 py-0.5 rounded font-mono border border-successGreenText/10">I went</span>
+                    <span className="text-xs text-successGreenText bg-successGreenBg/40 px-2 py-0.5 rounded font-mono border border-successGreenText/10">to a beautiful</span>
+                    <span className="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded font-mono border border-red-500/10 underline decoration-red-500 font-bold" title="Phát âm chưa chuẩn">beach</span>
+                    <span className="text-xs text-successGreenText bg-successGreenBg/40 px-2 py-0.5 rounded font-mono border border-successGreenText/10">last summer...</span>
+                  </div>
+                  <p className="text-[10px] text-red-500 font-medium mt-2">
+                    * Từ "beach" phát âm hơi ngắn, dễ nhầm sang từ nhạy cảm. Gợi ý: kéo dài nguyên âm /iː/.
+                  </p>
+                </div>
+
+                {/* Score badge */}
+                <div className="flex items-center justify-between bg-white border border-grayBorder rounded-xl p-3">
+                  <div className="flex items-center gap-2">
+                    <Award size={18} className="text-actionBlue" />
+                    <span className="text-xs text-brandDark font-semibold">Ước lượng band điểm:</span>
+                  </div>
+                  <span className="text-sm text-actionBlue font-bold font-poppins">6.5 - 7.0 IELTS</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
