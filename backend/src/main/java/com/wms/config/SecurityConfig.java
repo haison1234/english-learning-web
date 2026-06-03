@@ -28,8 +28,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS globally
             .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless REST APIs
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/**", "/error").permitAll() // Open auth and error endpoints
-                .anyRequest().authenticated() // Protect other endpoints
+                .anyRequest().permitAll() // Cho phép đi qua filter để AOP Aspect (@RequireAuth) tự kiểm tra và xử lý
             );
         return http.build();
     }

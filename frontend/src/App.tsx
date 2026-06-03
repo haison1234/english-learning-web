@@ -8,13 +8,15 @@ import CertificateModal from './components/CertificateModal'
 import PricingModal from './components/PricingModal'
 import { UserProfile, getCurrentUser, logoutUser } from './services/authService'
 import Dashboard from './pages/Dashboard'
+import CourseDetail from './components/CourseDetail'
 
 export default function App() {
   const { modal, open, close } = useAuthModal()
   const [certificateOpen, setCertificateOpen] = useState(false)
   const [pricingOpen, setPricingOpen] = useState(false)
   const [user, setUser] = useState<UserProfile | null>(null)
-  const [currentView, setCurrentView] = useState<'landing' | 'dashboard'>('landing')
+  const [currentView, setCurrentView] = useState<'landing' | 'dashboard' | 'course-detail'>('landing')
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
 
   // Retrieve user session on startup
   useEffect(() => {
@@ -29,6 +31,7 @@ export default function App() {
     logoutUser()
     setUser(null)
     setCurrentView('landing')
+    setSelectedCourseId(null)
   }
 
   return (
@@ -51,6 +54,22 @@ export default function App() {
           onLogout={handleLogout} 
           onNavigateLanding={() => setCurrentView('landing')} 
         />
+      ) : currentView === 'course-detail' && selectedCourseId ? (
+        <CourseDetail
+          courseId={selectedCourseId}
+          onBack={() => {
+            setCurrentView('landing')
+            setSelectedCourseId(null)
+          }}
+          onEnroll={() => {
+            if (user) {
+              setCurrentView('dashboard')
+            } else {
+              open('register')
+            }
+          }}
+          isLoggedIn={!!user}
+        />
       ) : (
         <>
           <Hero 
@@ -63,7 +82,11 @@ export default function App() {
             onDashboardClick={() => setCurrentView('dashboard')}
           />
           <About />
-          <Collection />
+          <Collection onSelectCourse={(id) => {
+            setSelectedCourseId(id)
+            setCurrentView('course-detail')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }} />
           <CTA />
         </>
       )}

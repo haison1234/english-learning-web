@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   LogOut, BookOpen, Award, Flame, Clock, 
   CheckCircle, Play, ChevronRight, User, Sparkles, BookMarked
 } from 'lucide-react'
 import { UserProfile } from '../services/authService'
+import { getCourses, CourseDTO } from '../services/courseService'
 
 interface DashboardProps {
   user: UserProfile
@@ -14,6 +15,22 @@ interface DashboardProps {
 export default function Dashboard({ user, onLogout, onNavigateLanding }: DashboardProps) {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<'my-courses' | 'all-courses'>('my-courses')
+  const [allCourses, setAllCourses] = useState<CourseDTO[]>([])
+  const [loadingAll, setLoadingAll] = useState(true)
+
+  useEffect(() => {
+    async function loadAllCourses() {
+      try {
+        const data = await getCourses()
+        setAllCourses(data.filter(c => c.status === 1))
+      } catch (err) {
+        console.error('Lỗi tải danh sách khám phá khóa học:', err)
+      } finally {
+        setLoadingAll(false)
+      }
+    }
+    loadAllCourses()
+  }, [])
 
   // Dữ liệu mẫu (Mock data) được đồng bộ màu xanh lá Neon sáng (#6FFF00) cực đẹp
   const stats = [
@@ -212,7 +229,7 @@ export default function Dashboard({ user, onLogout, onNavigateLanding }: Dashboa
                   onClick={() => setActiveTab('all-courses')}
                   className={`font-grotesk text-sm uppercase pb-4 -mb-[18px] transition-all relative ${activeTab === 'all-courses' ? 'text-[#6FFF00]' : 'text-[#EFF4FF]/40'}`}
                 >
-                  Khám phá lộ trình mới
+                  Khám phá lộ trình mới ({allCourses.length})
                   {activeTab === 'all-courses' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#6FFF00]" />}
                 </button>
               </div>
@@ -220,60 +237,142 @@ export default function Dashboard({ user, onLogout, onNavigateLanding }: Dashboa
 
             {/* Courses Grid */}
             <div className="flex flex-col gap-6">
-              {myCourses.map((course) => {
-                const percent = Math.round((course.completed / course.total) * 100)
-                return (
-                  <div 
-                    key={course.id}
-                    className="liquid-glass border border-white/5 hover:border-[#6FFF00]/20 rounded-[24px] p-5 flex flex-col sm:flex-row gap-5 items-stretch transition-all hover:translate-y-[-2px] duration-300"
-                  >
-                    {/* Course Thumbnail */}
-                    <div className="w-full sm:w-36 h-28 rounded-[16px] overflow-hidden border border-white/10 flex-shrink-0 relative">
-                      <img 
-                        src={course.image} 
-                        alt={course.title} 
-                        className="w-full h-full object-cover filter brightness-90"
-                      />
-                      <span className="absolute top-2 left-2 bg-[#010828]/80 text-[10px] text-[#EFF4FF] font-mono px-2 py-0.5 rounded border border-white/10 uppercase">
-                        {course.level}
-                      </span>
-                    </div>
-
-                    {/* Course Content */}
-                    <div className="flex-1 flex flex-col justify-between py-1">
-                      <div>
-                        <h3 className="font-grotesk text-base uppercase text-[#EFF4FF] hover:text-[#6FFF00] transition-colors leading-snug">
-                          {course.title}
-                        </h3>
-                        <p className="text-xs text-[#EFF4FF]/40 mt-1">
-                          Tiến trình: {course.completed}/{course.total} bài học ({percent}%)
-                        </p>
+              {activeTab === 'my-courses' ? (
+                myCourses.map((course) => {
+                  const percent = Math.round((course.completed / course.total) * 100)
+                  return (
+                    <div 
+                      key={course.id}
+                      className="liquid-glass border border-white/5 hover:border-[#6FFF00]/20 rounded-[24px] p-5 flex flex-col sm:flex-row gap-5 items-stretch transition-all hover:translate-y-[-2px] duration-300"
+                    >
+                      {/* Course Thumbnail */}
+                      <div className="w-full sm:w-36 h-28 rounded-[16px] overflow-hidden border border-white/10 flex-shrink-0 relative">
+                        <img 
+                          src={course.image} 
+                          alt={course.title} 
+                          className="w-full h-full object-cover filter brightness-90"
+                        />
+                        <span className="absolute top-2 left-2 bg-[#010828]/80 text-[10px] text-[#EFF4FF] font-mono px-2 py-0.5 rounded border border-white/10 uppercase">
+                          {course.level}
+                        </span>
                       </div>
 
-                      {/* Progress Bar */}
-                      <div className="mt-4 sm:mt-0">
-                        <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5 mb-1">
-                          <div 
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{ width: `${percent}%`, backgroundColor: course.color }}
-                          />
+                      {/* Course Content */}
+                      <div className="flex-1 flex flex-col justify-between py-1">
+                        <div>
+                          <h3 className="font-grotesk text-base uppercase text-[#EFF4FF] hover:text-[#6FFF00] transition-colors leading-snug">
+                            {course.title}
+                          </h3>
+                          <p className="text-xs text-[#EFF4FF]/40 mt-1">
+                            Tiến trình: {course.completed}/{course.total} bài học ({percent}%)
+                          </p>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="mt-4 sm:mt-0">
+                          <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5 mb-1">
+                            <div 
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{ width: `${percent}%`, backgroundColor: course.color }}
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Actions button */}
-                    <div className="flex items-center justify-end sm:pl-3">
-                      <button 
-                        onClick={() => alert(`Đang vào khóa học: ${course.title}`)}
-                        className="p-3.5 rounded-[16px] bg-white/5 border border-white/10 hover:border-[#6FFF00] hover:text-[#010828] hover:bg-[#6FFF00] transition-all text-[#EFF4FF] group active:scale-95 flex items-center justify-center"
-                      >
-                        <ChevronRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
-                      </button>
-                    </div>
+                      {/* Actions button */}
+                      <div className="flex items-center justify-end sm:pl-3">
+                        <button 
+                          onClick={() => alert(`Đang vào khóa học: ${course.title}`)}
+                          className="p-3.5 rounded-[16px] bg-white/5 border border-white/10 hover:border-[#6FFF00] hover:text-[#010828] hover:bg-[#6FFF00] transition-all text-[#EFF4FF] group active:scale-95 flex items-center justify-center"
+                        >
+                          <ChevronRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
+                        </button>
+                      </div>
 
-                  </div>
-                )
-              })}
+                    </div>
+                  )
+                })
+              ) : loadingAll ? (
+                <div className="flex items-center justify-center py-10">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6FFF00]"></div>
+                </div>
+              ) : allCourses.length === 0 ? (
+                <div className="text-center py-10 text-[#EFF4FF]/40 font-mono">
+                  Chưa có khóa học mới nào được ra mắt.
+                </div>
+              ) : (
+                allCourses.map((course, i) => {
+                  const isFree = course.courseType === 0;
+                  const priceText = isFree ? 'Miễn phí' : `${course.basePrice.toLocaleString('vi-VN')}đ`;
+                  const backupImages = [
+                    'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=400&q=80',
+                    'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=400&q=80',
+                    'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=400&q=80',
+                    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'
+                  ];
+                  const imageSrc = course.thumbnailUrl && !course.thumbnailUrl.includes('cdn.elearning.vn')
+                    ? course.thumbnailUrl
+                    : backupImages[i % backupImages.length];
+
+                  const getLevelText = (lvl: number) => {
+                    if (lvl === 0) return 'Beginner';
+                    if (lvl === 1) return 'Intermediate';
+                    return 'Advanced';
+                  };
+
+                  return (
+                    <div 
+                      key={course.id}
+                      className="liquid-glass border border-white/5 hover:border-[#6FFF00]/20 rounded-[24px] p-5 flex flex-col sm:flex-row gap-5 items-stretch transition-all hover:translate-y-[-2px] duration-300"
+                    >
+                      {/* Course Thumbnail */}
+                      <div className="w-full sm:w-36 h-28 rounded-[16px] overflow-hidden border border-white/10 flex-shrink-0 relative">
+                        <img 
+                          src={imageSrc} 
+                          alt={course.title} 
+                          className="w-full h-full object-cover filter brightness-90"
+                        />
+                        <span className="absolute top-2 left-2 bg-[#010828]/80 text-[10px] text-[#EFF4FF] font-mono px-2 py-0.5 rounded border border-white/10 uppercase">
+                          {getLevelText(course.level)}
+                        </span>
+                      </div>
+
+                      {/* Course Content */}
+                      <div className="flex-1 flex flex-col justify-between py-1">
+                        <div>
+                          <h3 className="font-grotesk text-base uppercase text-[#EFF4FF] hover:text-[#6FFF00] transition-colors leading-snug">
+                            {course.title}
+                          </h3>
+                          <p className="text-xs text-[#EFF4FF]/50 mt-2 line-clamp-2">
+                            {course.description}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-3 mt-3 sm:mt-0">
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[#EFF4FF]/60 font-mono">
+                            {isFree ? 'FREE' : 'PREMIUM'}
+                          </span>
+                          <span className="text-xs text-[#6FFF00] font-grotesk uppercase tracking-wide">
+                            Học phí: {priceText}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Actions button */}
+                      <div className="flex items-center justify-end sm:pl-3">
+                        <button 
+                          onClick={() => alert(`Đăng ký khóa học: ${course.title}`)}
+                          className="px-5 py-3 rounded-[16px] bg-white/5 border border-white/10 hover:border-[#6FFF00] hover:text-[#010828] hover:bg-[#6FFF00] transition-all text-xs font-grotesk uppercase tracking-wider group active:scale-95 flex items-center justify-center gap-2"
+                        >
+                          <span>Đăng ký</span>
+                          <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                        </button>
+                      </div>
+
+                    </div>
+                  )
+                })
+              )}
             </div>
 
           </div>

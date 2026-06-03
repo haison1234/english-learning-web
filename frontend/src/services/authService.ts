@@ -46,6 +46,60 @@ export async function loginWithGoogle(code: string): Promise<AuthResponse> {
 }
 
 /**
+ * Log in with Email and Password
+ */
+export async function loginUser(email: string, password: string): Promise<AuthResponse> {
+  const response = await fetch(`${API_URL}/api/v1/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Đăng nhập thất bại. Vui lòng thử lại!');
+  }
+
+  const data: AuthResponse = await response.json();
+  
+  // Save to local storage
+  localStorage.setItem('accessToken', data.accessToken);
+  localStorage.setItem('refreshToken', data.refreshToken);
+  localStorage.setItem('user', JSON.stringify(data.user));
+
+  return data;
+}
+
+/**
+ * Register with Name, Email and Password
+ */
+export async function registerUser(fullName: string, email: string, password: string): Promise<AuthResponse> {
+  const response = await fetch(`${API_URL}/api/v1/auth/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ fullName, email, password }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Đăng ký thất bại. Vui lòng thử lại!');
+  }
+
+  const data: AuthResponse = await response.json();
+  
+  // Save to local storage
+  localStorage.setItem('accessToken', data.accessToken);
+  localStorage.setItem('refreshToken', data.refreshToken);
+  localStorage.setItem('user', JSON.stringify(data.user));
+
+  return data;
+}
+
+/**
  * Gets the current logged-in user from localStorage
  */
 export function getCurrentUser(): UserProfile | null {

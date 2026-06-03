@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { X, Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
-import { loginWithGoogle, UserProfile } from '../services/authService'
+import { loginWithGoogle, loginUser, registerUser, UserProfile } from '../services/authService'
 
 type ModalType = 'login' | 'register' | null
 
@@ -22,6 +22,11 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
   const [showPw2, setShowPw2] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   const handleGoogleLogin = () => {
     setError(null)
@@ -75,6 +80,48 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
 
   const isLogin = type === 'login'
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    if (isLogin) {
+      if (!email.trim() || !password.trim()) {
+        setError('Vui lòng nhập đầy đủ Email và Mật khẩu!')
+        return
+      }
+
+      setIsLoading(true)
+      try {
+        const authData = await loginUser(email.trim(), password)
+        onSuccess(authData.user)
+      } catch (err: any) {
+        setError(err.message || 'Đăng nhập thất bại!')
+      } finally {
+        setIsLoading(false)
+      }
+    } else {
+      if (!fullName.trim() || !email.trim() || !password.trim()) {
+        setError('Vui lòng điền đầy đủ các thông tin!')
+        return
+      }
+
+      if (password !== confirmPassword) {
+        setError('Mật khẩu xác nhận không khớp!')
+        return
+      }
+
+      setIsLoading(true)
+      try {
+        const authData = await registerUser(fullName.trim(), email.trim(), password)
+        onSuccess(authData.user)
+      } catch (err: any) {
+        setError(err.message || 'Đăng ký thất bại!')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+  }
+
   return (
     /* Backdrop */
     <div
@@ -106,7 +153,7 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
         </div>
 
         {/* Form */}
-        <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           {/* Name – only on register */}
           {!isLogin && (
             <div className="relative">
@@ -114,6 +161,8 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
               <input
                 type="text"
                 placeholder="Họ và tên"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-[14px] py-3.5 pl-10 pr-4 text-[#EFF4FF] font-mono text-sm placeholder:text-[#EFF4FF]/30 focus:outline-none focus:border-[#6FFF00]/50 transition-colors"
               />
             </div>
@@ -125,6 +174,8 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
             <input
               type="email"
               placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-[14px] py-3.5 pl-10 pr-4 text-[#EFF4FF] font-mono text-sm placeholder:text-[#EFF4FF]/30 focus:outline-none focus:border-[#6FFF00]/50 transition-colors"
             />
           </div>
@@ -135,6 +186,8 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
             <input
               type={showPw ? 'text' : 'password'}
               placeholder="Mật khẩu"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-[14px] py-3.5 pl-10 pr-11 text-[#EFF4FF] font-mono text-sm placeholder:text-[#EFF4FF]/30 focus:outline-none focus:border-[#6FFF00]/50 transition-colors"
             />
             <button
@@ -153,6 +206,8 @@ function AuthModal({ type, onClose, onSwitch, onSuccess }: AuthModalProps) {
               <input
                 type={showPw2 ? 'text' : 'password'}
                 placeholder="Xác nhận mật khẩu"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-[14px] py-3.5 pl-10 pr-11 text-[#EFF4FF] font-mono text-sm placeholder:text-[#EFF4FF]/30 focus:outline-none focus:border-[#6FFF00]/50 transition-colors"
               />
               <button
