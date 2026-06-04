@@ -26,8 +26,8 @@ export default {
         successGreenText: '#2E7D32',
       },
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        poppins: ['Poppins', 'SVN-Poppins', 'sans-serif'],
+        sans: ['"Noto Sans"', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        poppins: ['"Noto Sans"', 'sans-serif'],
       },
       boxShadow: {
         l1: 'rgba(31, 36, 46, 0.1) 0px 4px 24px 0px',

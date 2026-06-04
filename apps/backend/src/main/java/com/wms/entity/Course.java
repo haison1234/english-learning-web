@@ -1,13 +1,7 @@
 package com.wms.entity;
 
-import com.wms.enums.CourseLevel;
-import com.wms.enums.CourseStatus;
-import com.wms.enums.CourseType;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -20,45 +14,38 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class Course {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "Id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "Title", nullable = false, length = 300)
+    @Column(nullable = false, length = 300)
     private String title;
 
-    @Column(name = "Description", columnDefinition = "NVARCHAR(MAX)")
-    private String description;
+    @Column(nullable = false, columnDefinition = "TINYINT")
+    private Integer level; // 0: Beginner, 1: Intermediate, 2: Advanced
 
-    @Column(name = "Level", nullable = false)
-    private CourseLevel level;
+    @Column(precision = 12, scale = 0)
+    private BigDecimal price;
 
-    @Column(name = "CourseType", nullable = false)
-    private CourseType courseType = CourseType.FREE;
+    @Column(columnDefinition = "TINYINT")
+    private Integer status; // 0: Draft, 1: Published
 
-    @Column(name = "BasePrice", nullable = false, precision = 12, scale = 0)
-    private BigDecimal basePrice = BigDecimal.ZERO;
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    private String metadata; // JSON: description, thumbnailUrl, trailerUrl
 
-    @Column(name = "ThumbnailUrl", length = 500)
-    private String thumbnailUrl;
-
-    @Column(name = "TrailerUrl", length = 500)
-    private String trailerUrl;
-
-    @Column(name = "Status", nullable = false)
-    private CourseStatus status = CourseStatus.DRAFT;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "CreatedBy", nullable = false)
-    private User createdBy;
-
-    @CreationTimestamp
-    @Column(name = "CreatedAt", nullable = false, updatable = false)
+    @Column(updatable = false)
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    @Column(name = "UpdatedAt", nullable = false)
-    private LocalDateTime updatedAt;
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (price == null) {
+            price = BigDecimal.ZERO;
+        }
+        if (status == null) {
+            status = 0;
+        }
+    }
 }

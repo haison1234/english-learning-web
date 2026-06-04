@@ -56,23 +56,23 @@ Prep Education's design system embodies a modern, professional learning platform
 
 ### Font Family
 
-**Primary Font Stack:** SVN-Poppins, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
+**Primary Font Stack:** "Noto Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
 
-**Secondary Font Stack:** Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif
+**Secondary Font Stack:** "Noto Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
 
 ### Hierarchy
 
 | Role | Font | Size | Weight | Line Height | Letter Spacing | Notes |
 |------|------|------|--------|-------------|---|---|
-| Display/Hero | SVN-Poppins | 100px | 600 | 116px | 0 | Page hero headings; maximum visual impact |
-| Heading 1 | Inter | 30px | 700 | 42px | 0 | Section titles and primary headings |
-| Heading 2 | SVN-Poppins | 14px | 400 | 20px | 0 | Secondary headings and subheadings |
-| Body Text | Inter | 14px | 400 | 20px | 0 | Primary reading content and descriptions |
-| Button Label | Inter | 16px | 600 | 24px | 0 | Large primary buttons |
-| Button Label Small | Inter | 14px | 600 | 20px | 0 | Secondary and compact buttons |
-| Emphasized Text | Inter | 14px | 600 | 20px | 0 | Inline emphasis, strong spans, highlights |
-| Caption/Meta | Inter | 12px | 400 | 18px | 0 | Timestamps, metadata, helper text |
-| Navigation | Inter | 14px | 400 | 20px | 0 | Navigation menu links |
+| Display/Hero | Noto Sans | 100px | 600 | 116px | 0 | Page hero headings; maximum visual impact |
+| Heading 1 | Noto Sans | 30px | 700 | 42px | 0 | Section titles and primary headings |
+| Heading 2 | Noto Sans | 14px | 400 | 20px | 0 | Secondary headings and subheadings |
+| Body Text | Noto Sans | 14px | 400 | 20px | 0 | Primary reading content and descriptions |
+| Button Label | Noto Sans | 16px | 600 | 24px | 0 | Large primary buttons |
+| Button Label Small | Noto Sans | 14px | 600 | 20px | 0 | Secondary and compact buttons |
+| Emphasized Text | Noto Sans | 14px | 600 | 20px | 0 | Inline emphasis, strong spans, highlights |
+| Caption/Meta | Noto Sans | 12px | 400 | 18px | 0 | Timestamps, metadata, helper text |
+| Navigation | Noto Sans | 14px | 400 | 20px | 0 | Navigation menu links |
 
 ### Principles
 
@@ -80,8 +80,7 @@ Prep Education's design system embodies a modern, professional learning platform
 - **Readable line height:** Minimum 20px line height for body content; 24px for larger text
 - **Generous sizing:** Base body size at 14px ensures accessibility and legibility on all screens
 - **Consistent spacing:** Maintain 1.4–1.5x multiplier between line height and font size
-- **Poppins for display:** Reserved for hero and large headings to create personality
-- **Inter for utility:** Used for body, navigation, and buttons for clean, universal clarity
+- **Noto Sans for everything:** Uniform, highly readable font family supporting multiple languages
 
 ## 4. Component Stylings
 
@@ -337,7 +336,7 @@ Prep Education employs generous, intentional whitespace to reduce cognitive load
 ### Don't
 
 - Never use text smaller than 12px on interactive elements
-- Avoid mixing Poppins and Inter in the same hierarchy level; reserve Poppins for display only
+- Use Noto Sans consistently across all hierarchy levels for maximum readability
 - Don't apply shadows stronger than `rgba(31, 36, 46, 0.2)`; keep depth subtle and realistic
 - Never set border radius to 0px on interactive buttons; minimum `8px` for consistency
 - Avoid full-opacity black (`#000000`) in standard UI; use `#1F242E` or `#23242D` instead
@@ -397,7 +396,7 @@ Prep Education employs generous, intentional whitespace to reduce cognitive load
 
 1. **Always use `#0060FD` for primary buttons, links, and interactive highlights**—it is the system's core accent and signals actionability.
 
-2. **Set base body text to 14px with 400 weight in Inter; use 16px only for hero or display copy.**
+2. **Set base body text to 14px with 400 weight in Noto Sans; use 16px only for hero or display copy.**
 
 3. **Apply `999px` border radius to all buttons uniformly**—the pill shape is a defining visual characteristic.
 
@@ -411,6 +410,6 @@ Prep Education employs generous, intentional whitespace to reduce cognitive load
 
 8. **Ensure all text contrast meets WCAG AA (4.5:1 minimum for body, 3:1 for large text)**; test dark text on light backgrounds.
 
-9. **Use 16px for heading font size (30px with 700 weight in Inter); reserve 100px Poppins for hero display only.**
+9. **Use 16px for heading font size (30px with 700 weight in Noto Sans); reserve 100px for hero display only.**
 
 10. **On mobile, reduce padding by ~50% and stack layouts vertically; maintain 44px minimum touch targets and full-width button widths.**

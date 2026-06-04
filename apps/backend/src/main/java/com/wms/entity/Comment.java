@@ -2,9 +2,6 @@ package com.wms.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -16,17 +13,15 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class Comment {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "Id", updatable = false, nullable = false)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "LessonId", nullable = false)
     private Lesson lesson;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "UserId", nullable = false)
     private User user;
 
@@ -34,17 +29,16 @@ public class Comment {
     @JoinColumn(name = "ParentId")
     private Comment parent;
 
-    @Column(name = "Content", nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(columnDefinition = "NVARCHAR(MAX)", nullable = false)
     private String content;
 
-    @Column(name = "Upvotes", nullable = false)
-    private int upvotes = 0;
-
-    @CreationTimestamp
-    @Column(name = "CreatedAt", nullable = false, updatable = false)
+    @Column(updatable = false)
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    @Column(name = "UpdatedAt", nullable = false)
-    private LocalDateTime updatedAt;
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }

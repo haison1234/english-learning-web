@@ -83,14 +83,14 @@ public class AuthController {
                     .id(user.getId())
                     .fullName(user.getFullName())
                     .email(user.getEmail())
-                    .avatarUrl(user.getAvatarUrl())
-                    .role(user.getRole())
-                    .status(user.getStatus())
-                    .emailVerified(user.isEmailVerified())
-                    .oAuthProvider(user.getOAuthProvider())
-                    .oAuthId(user.getOAuthId())
+                    .avatarUrl(user.getMetadata())
+                    .role(null)
+                    .status(null)
+                    .emailVerified(user.getVerifyToken() == null)
+                    .oAuthProvider(null)
+                    .oAuthId(null)
                     .createdAt(user.getCreatedAt())
-                    .updatedAt(user.getUpdatedAt())
+                    .updatedAt(null)
                     .build();
 
             // 4. Generate local tokens (placeholder tokens that React will store)
@@ -131,9 +131,7 @@ public class AuthController {
                     .fullName(request.getFullName())
                     .email(request.getEmail())
                     .passwordHash(hashed)
-                    .role(UserRole.STUDENT)
-                    .status(UserStatus.ACTIVE)
-                    .emailVerified(false)
+                    .role(1)
                     .build();
             
             userRepository.save(user);
@@ -143,9 +141,9 @@ public class AuthController {
                     .id(user.getId())
                     .fullName(user.getFullName())
                     .email(user.getEmail())
-                    .role(user.getRole())
-                    .status(user.getStatus())
-                    .emailVerified(user.isEmailVerified())
+                    .role(null)
+                    .status(null)
+                    .emailVerified(false)
                     .build();
 
             // 5. Generate local tokens
@@ -189,21 +187,16 @@ public class AuthController {
                 user = userOptional.get();
                 // Sync profiles with the latest Google metadata
                 user.setFullName(fullName);
-                user.setAvatarUrl(avatarUrl);
-                user.setOAuthId(googleSubId);
-                user.setOAuthProvider("google");
+                user.setMetadata("{\"avatarUrl\":\"" + avatarUrl + "\",\"googleId\":\"" + googleSubId + "\"}");
                 userRepository.save(user);
             } else {
                 // Register a new student with ACTIVE status
                 user = User.builder()
                         .fullName(fullName)
                         .email(email)
-                        .avatarUrl(avatarUrl)
-                        .role(UserRole.STUDENT)
-                        .status(UserStatus.ACTIVE)
-                        .emailVerified(true)
-                        .oAuthProvider("google")
-                        .oAuthId(googleSubId)
+                        .metadata("{\"avatarUrl\":\"" + avatarUrl + "\",\"googleId\":\"" + googleSubId + "\"}")
+                        .role(1)
+                        .verifyToken("verified")
                         .build();
                 userRepository.save(user);
             }
@@ -213,14 +206,14 @@ public class AuthController {
                     .id(user.getId())
                     .fullName(user.getFullName())
                     .email(user.getEmail())
-                    .avatarUrl(user.getAvatarUrl())
-                    .role(user.getRole())
-                    .status(user.getStatus())
-                    .emailVerified(user.isEmailVerified())
-                    .oAuthProvider(user.getOAuthProvider())
-                    .oAuthId(user.getOAuthId())
+                    .avatarUrl(user.getMetadata())
+                    .role(null)
+                    .status(null)
+                    .emailVerified(true)
+                    .oAuthProvider(null)
+                    .oAuthId(null)
                     .createdAt(user.getCreatedAt())
-                    .updatedAt(user.getUpdatedAt())
+                    .updatedAt(null)
                     .build();
 
             // 4. Generate local authentication tokens (placeholder tokens that React will store)

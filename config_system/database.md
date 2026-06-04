@@ -18,29 +18,62 @@ USE ELearningDB;
 GO
 
 -- ============================================================
+--  0. ROLES & PERMISSIONS (RBAC)
+-- ============================================================
+CREATE TABLE Roles (
+    Id          UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(),
+    Name        NVARCHAR(50)     NOT NULL, -- Admin, Teacher, Student, Guest
+    Description NVARCHAR(255)    NULL,
+    CreatedAt   DATETIME2(0)     NOT NULL DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT PK_Roles PRIMARY KEY (Id),
+    CONSTRAINT UQ_Roles_Name UNIQUE (Name)
+);
+
+CREATE TABLE Permissions (
+    Id          UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(),
+    Name        NVARCHAR(100)    NOT NULL, -- Course.Create, Lesson.Delete, etc.
+    Description NVARCHAR(255)    NULL,
+
+    CONSTRAINT PK_Permissions PRIMARY KEY (Id),
+    CONSTRAINT UQ_Permissions_Name UNIQUE (Name)
+);
+
+CREATE TABLE RolePermissions (
+    RoleId       UNIQUEIDENTIFIER NOT NULL,
+    PermissionId UNIQUEIDENTIFIER NOT NULL,
+
+    CONSTRAINT PK_RolePermissions PRIMARY KEY (RoleId, PermissionId),
+    CONSTRAINT FK_RolePermissions_Roles FOREIGN KEY (RoleId) REFERENCES Roles(Id) ON DELETE CASCADE,
+    CONSTRAINT FK_RolePermissions_Permissions FOREIGN KEY (PermissionId) REFERENCES Permissions(Id) ON DELETE CASCADE
+);
+GO
+
+-- ============================================================
 --  1. USERS
 -- ============================================================
 CREATE TABLE Users (
     Id            UNIQUEIDENTIFIER    NOT NULL DEFAULT NEWSEQUENTIALID(),
+    RoleId        UNIQUEIDENTIFIER    NOT NULL,
     FullName      NVARCHAR(150)       NOT NULL,
     Email         NVARCHAR(255)       NOT NULL,
     PasswordHash  NVARCHAR(512)       NULL,          -- NULL nếu đăng nhập OAuth
     AvatarUrl     NVARCHAR(500)       NULL,
-    Role          TINYINT             NOT NULL        -- 0=Guest(chỉ đọc), 1=Student, 2=Admin
-        CONSTRAINT CK_Users_Role CHECK (Role IN (0, 1, 2)),
     Status        TINYINT             NOT NULL DEFAULT 1  -- 0=Inactive, 1=Active
         CONSTRAINT CK_Users_Status CHECK (Status IN (0, 1)),
     EmailVerified BIT                 NOT NULL DEFAULT 0,
     OAuthProvider NVARCHAR(50)        NULL,          -- 'google', NULL nếu email/pass
     OAuthId       NVARCHAR(255)       NULL,
+    IsDeleted     BIT                 NOT NULL DEFAULT 0,
     CreatedAt     DATETIME2(0)        NOT NULL DEFAULT SYSUTCDATETIME(),
     UpdatedAt     DATETIME2(0)        NOT NULL DEFAULT SYSUTCDATETIME(),
 
     CONSTRAINT PK_Users PRIMARY KEY (Id),
-    CONSTRAINT UQ_Users_Email UNIQUE (Email)
+    CONSTRAINT UQ_Users_Email UNIQUE (Email),
+    CONSTRAINT FK_Users_Roles FOREIGN KEY (RoleId) REFERENCES Roles(Id)
 );
 
-CREATE INDEX IX_Users_Role   ON Users (Role);
+CREATE INDEX IX_Users_RoleId ON Users (RoleId);
 CREATE INDEX IX_Users_Status ON Users (Status);
 GO
 
@@ -90,6 +123,7 @@ CREATE TABLE Courses (
     TrailerUrl   NVARCHAR(500)    NULL,               -- Preview video không cần login
     Status       TINYINT          NOT NULL DEFAULT 0  -- 0=Draft, 1=Published, 2=Archived
         CONSTRAINT CK_Courses_Status CHECK (Status IN (0, 1, 2)),
+    IsDeleted    BIT              NOT NULL DEFAULT 0,
     CreatedBy    UNIQUEIDENTIFIER NOT NULL,
     CreatedAt    DATETIME2(0)     NOT NULL DEFAULT SYSUTCDATETIME(),
     UpdatedAt    DATETIME2(0)     NOT NULL DEFAULT SYSUTCDATETIME(),
@@ -101,6 +135,30 @@ CREATE TABLE Courses (
 CREATE INDEX IX_Courses_Status     ON Courses (Status);
 CREATE INDEX IX_Courses_CourseType ON Courses (CourseType);
 CREATE INDEX IX_Courses_Level      ON Courses (Level);
+GO
+
+-- ============================================================
+--  4.1. CATEGORIES (Phân loại khóa học)
+-- ============================================================
+CREATE TABLE Categories (
+    Id          UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(),
+    Name        NVARCHAR(100)    NOT NULL,
+    Description NVARCHAR(MAX)    NULL,
+    CreatedAt   DATETIME2(0)     NOT NULL DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT PK_Categories PRIMARY KEY (Id),
+    CONSTRAINT UQ_Categories_Name UNIQUE (Name)
+);
+GO
+
+CREATE TABLE CourseCategories (
+    CourseId   UNIQUEIDENTIFIER NOT NULL,
+    CategoryId UNIQUEIDENTIFIER NOT NULL,
+
+    CONSTRAINT PK_CourseCategories PRIMARY KEY (CourseId, CategoryId),
+    CONSTRAINT FK_CourseCategories_Courses FOREIGN KEY (CourseId) REFERENCES Courses(Id) ON DELETE CASCADE,
+    CONSTRAINT FK_CourseCategories_Categories FOREIGN KEY (CategoryId) REFERENCES Categories(Id) ON DELETE CASCADE
+);
 GO
 
 -- ============================================================
@@ -117,15 +175,31 @@ CREATE TABLE Lessons (
     DurationSeconds INT              NOT NULL DEFAULT 0,
     OrderIndex      INT              NOT NULL DEFAULT 0,
     IsPreview       BIT              NOT NULL DEFAULT 0,  -- 1=guest xem được
+    IsDeleted       BIT              NOT NULL DEFAULT 0,
     CreatedAt       DATETIME2(0)     NOT NULL DEFAULT SYSUTCDATETIME(),
     UpdatedAt       DATETIME2(0)     NOT NULL DEFAULT SYSUTCDATETIME(),
 
     CONSTRAINT PK_Lessons PRIMARY KEY (Id),
-    CONSTRAINT FK_Lessons_Courses FOREIGN KEY (CourseId) REFERENCES Courses(Id) ON DELETE CASCADE
+    CONSTRAINT FK_Lessons_Courses FOREIGN KEY (CourseId) REFERENCES Courses(Id)
 );
 
 CREATE INDEX IX_Lessons_CourseId    ON Lessons (CourseId);
 CREATE INDEX IX_Lessons_OrderIndex  ON Lessons (CourseId, OrderIndex);
+GO
+
+-- ============================================================
+--  5.1. LESSON MEDIA (Quản lý File & Video Media)
+-- ============================================================
+CREATE TABLE LessonMedia (
+    Id         UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(),
+    LessonId   UNIQUEIDENTIFIER NOT NULL,
+    Resolution NVARCHAR(20)     NOT NULL, -- '720p', '1080p', 'hls', 'original'
+    Url        NVARCHAR(500)    NOT NULL,
+    CreatedAt  DATETIME2(0)     NOT NULL DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT PK_LessonMedia PRIMARY KEY (Id),
+    CONSTRAINT FK_LessonMedia_Lessons FOREIGN KEY (LessonId) REFERENCES Lessons(Id) ON DELETE CASCADE
+);
 GO
 
 -- ============================================================
@@ -147,6 +221,21 @@ CREATE TABLE Coupons (
     CONSTRAINT PK_Coupons PRIMARY KEY (Id),
     CONSTRAINT UQ_Coupons_Code UNIQUE (Code),
     CONSTRAINT FK_Coupons_Users FOREIGN KEY (CreatedBy) REFERENCES Users(Id)
+);
+GO
+
+-- ============================================================
+--  6.1. COUPON USAGES
+-- ============================================================
+CREATE TABLE CouponUsages (
+    Id        UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(),
+    CouponId  UNIQUEIDENTIFIER NOT NULL,
+    UserId    UNIQUEIDENTIFIER NOT NULL,
+    UsedAt    DATETIME2(0)     NOT NULL DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT PK_CouponUsages PRIMARY KEY (Id),
+    CONSTRAINT FK_CouponUsages_Coupons FOREIGN KEY (CouponId) REFERENCES Coupons(Id) ON DELETE CASCADE,
+    CONSTRAINT FK_CouponUsages_Users   FOREIGN KEY (UserId)   REFERENCES Users(Id)
 );
 GO
 
@@ -258,8 +347,10 @@ CREATE TABLE Questions (
     QuestionType  TINYINT          NOT NULL  -- 0=MultipleChoice, 1=FillBlank, 2=Matching
         CONSTRAINT CK_Questions_Type CHECK (QuestionType IN (0, 1, 2)),
     Content       NVARCHAR(MAX)    NOT NULL,
-    Options       NVARCHAR(MAX)    NULL,     -- JSON: [{"key":"A","text":"..."}]
-    CorrectAnswer NVARCHAR(MAX)    NOT NULL, -- JSON hoặc plain text tuỳ loại câu
+    Options       NVARCHAR(MAX)    NULL      -- JSON: [{"key":"A","text":"..."}]
+        CONSTRAINT CK_Questions_Options_JSON CHECK (Options IS NULL OR ISJSON(Options) = 1),
+    CorrectAnswer NVARCHAR(MAX)    NOT NULL  -- JSON hoặc plain text tuỳ loại câu
+        CONSTRAINT CK_Questions_CorrectAnswer_JSON CHECK (ISJSON(CorrectAnswer) = 1),
     Points        DECIMAL(5,2)     NOT NULL DEFAULT 1.00,
     OrderIndex    INT              NOT NULL DEFAULT 0,
 
@@ -277,7 +368,8 @@ CREATE TABLE Submissions (
     Id             UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(),
     AssignmentId   UNIQUEIDENTIFIER NOT NULL,
     UserId         UNIQUEIDENTIFIER NOT NULL,
-    Answers        NVARCHAR(MAX)    NOT NULL, -- JSON: {"questionId": "answer"}
+    Answers        NVARCHAR(MAX)    NOT NULL  -- JSON: {"questionId": "answer"}
+        CONSTRAINT CK_Submissions_Answers_JSON CHECK (ISJSON(Answers) = 1),
     Score          DECIMAL(5,2)     NULL,
     IsPassed       BIT              NULL,
     AttemptNumber  INT              NOT NULL DEFAULT 1,

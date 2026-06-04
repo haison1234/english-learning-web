@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getCourseDetail, CourseDetailDTO, LessonDTO } from '../services/courseService';
-import { ArrowLeft, BookOpen, Clock, Users, Play, Lock, Sparkles, Award } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Users, Play, Lock, Sparkles, Award, ShoppingCart, CheckCircle2, Zap } from 'lucide-react';
+import { useCart } from '../stores/cartStore';
 
 const BACKUP_VIDEOS = [
   'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260331_053923_22c0a6a5-313c-474c-85ff-3b50d25e944a.mp4',
@@ -12,10 +13,12 @@ interface CourseDetailProps {
   courseId: string;
   onBack: () => void;
   onEnroll: () => void;
+  onCartOpen?: () => void;
   isLoggedIn: boolean;
 }
 
-export default function CourseDetail({ courseId, onBack, onEnroll, isLoggedIn }: CourseDetailProps) {
+export default function CourseDetail({ courseId, onBack, onEnroll, onCartOpen, isLoggedIn }: CourseDetailProps) {
+  const { addItem, isInCart } = useCart();
   const [course, setCourse] = useState<CourseDetailDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -214,21 +217,69 @@ export default function CourseDetail({ courseId, onBack, onEnroll, isLoggedIn }:
               </div>
             </div>
 
-            {/* Nút Đăng Ký Học */}
-            <div className="flex flex-col sm:flex-row items-center gap-6 mt-4">
-              <button
-                onClick={onEnroll}
-                className="w-full sm:w-auto px-10 py-4 bg-actionBlue hover:bg-actionBlueHover active:bg-actionBlueActive text-white font-bold text-sm rounded-[999px] shadow-l1 hover:scale-[1.02] active:scale-[0.98] transition-all text-center"
-              >
-                {isLoggedIn ? 'Bắt đầu học ngay' : 'Đăng ký học ngay'}
-              </button>
-              
-              {!isLoggedIn && (
-                <p className="text-xs text-secondaryText font-medium max-w-xs text-center sm:text-left leading-relaxed">
-                  * Đăng ký tài khoản để bắt đầu lưu trữ tiến trình và tham gia làm bài tập chấm điểm tự động.
-                </p>
+            {/* Nút CTA */}
+            <div className="flex flex-col sm:flex-row items-start gap-4 mt-4">
+              {isFree ? (
+                <button
+                  onClick={onEnroll}
+                  className="w-full sm:w-auto px-10 py-4 bg-actionBlue hover:bg-actionBlueHover active:bg-actionBlueActive text-white font-bold text-sm rounded-[999px] shadow-l1 hover:scale-[1.02] active:scale-[0.98] transition-all text-center"
+                >
+                  {isLoggedIn ? 'Bắt đầu học ngay' : 'Đăng ký học miễn phí'}
+                </button>
+              ) : isInCart(course.id) ? (
+                <>
+                  <button
+                    onClick={() => onCartOpen?.()}
+                    className="w-full sm:w-auto px-8 py-4 bg-actionBlue/10 text-actionBlue border-2 border-actionBlue/30 font-bold text-sm rounded-[999px] hover:bg-actionBlue/20 transition-all flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle2 size={18} />
+                    Đã thêm vào giỏ hàng
+                  </button>
+                  <button
+                    onClick={() => { onCartOpen?.() }}
+                    className="w-full sm:w-auto px-8 py-4 bg-actionBlue hover:bg-actionBlueHover text-white font-bold text-sm rounded-[999px] shadow-l1 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  >
+                    <Zap size={16} />
+                    Thanh toán ngay
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      if (!isLoggedIn) {
+                        onEnroll(); // Trigger login modal
+                        return;
+                      }
+                      addItem({
+                        courseId: course.id,
+                        title: course.title,
+                        basePrice: course.basePrice,
+                        thumbnailUrl: course.thumbnailUrl,
+                        courseType: course.courseType,
+                      })
+                      onCartOpen?.()
+                    }}
+                    className="w-full sm:w-auto px-8 py-4 bg-actionBlue hover:bg-actionBlueHover active:bg-actionBlueActive text-white font-bold text-sm rounded-[999px] shadow-l1 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  >
+                    <ShoppingCart size={16} />
+                    Thêm vào giỏ hàng
+                  </button>
+                  <button
+                    onClick={onEnroll}
+                    className="w-full sm:w-auto px-8 py-4 border-2 border-actionBlue text-actionBlue hover:bg-actionBlue/5 font-bold text-sm rounded-[999px] transition-all flex items-center justify-center gap-2"
+                  >
+                    <Zap size={16} />
+                    Mua ngay
+                  </button>
+                </>
               )}
             </div>
+            {!isLoggedIn && (
+              <p className="text-xs text-secondaryText font-medium max-w-xs leading-relaxed mt-2">
+                * Đăng ký tài khoản để bắt đầu lưu trữ tiến trình và tham gia làm bài tập chấm điểm tự động.
+              </p>
+            )}
           </div>
 
           {/* CỘT PHẢI: TRÌNH PHÁT VIDEO PREVIEW (5 cột) */}

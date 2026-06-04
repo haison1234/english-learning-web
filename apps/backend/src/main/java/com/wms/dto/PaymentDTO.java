@@ -17,7 +17,7 @@ public class PaymentDTO {
     private UUID id;
     private UUID userId;
     private UUID courseId;
-    private UUID couponId;
+    private String couponCode;
     private BigDecimal originalPrice;
     private BigDecimal discountAmount;
     private BigDecimal finalPrice;

@@ -1,12 +1,7 @@
 package com.wms.entity;
 
-import com.wms.enums.LessonContentType;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -17,42 +12,36 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class Lesson {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "Id", updatable = false, nullable = false)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CourseId", nullable = false)
     private Course course;
 
-    @Column(name = "Title", nullable = false, length = 300)
+    @Column(nullable = false, length = 300)
     private String title;
 
-    @Column(name = "ContentType", nullable = false)
-    private LessonContentType contentType;
+    @Column(columnDefinition = "BIT DEFAULT 0")
+    private Boolean isPreview;
 
-    @Column(name = "ContentUrl", length = 500)
-    private String contentUrl;
+    @Column(columnDefinition = "INT DEFAULT 0")
+    private Integer orderIndex;
 
-    @Column(name = "TextContent", columnDefinition = "NVARCHAR(MAX)")
-    private String textContent;
+    @Column(columnDefinition = "TINYINT")
+    private Integer type; // 0: Video/Audio/Text, 1: Quiz
 
-    @Column(name = "DurationSeconds", nullable = false)
-    private int durationSeconds = 0;
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    private String content; // JSON
 
-    @Column(name = "OrderIndex", nullable = false)
-    private int orderIndex = 0;
-
-    @Column(name = "IsPreview", nullable = false)
-    private boolean isPreview = false;
-
-    @CreationTimestamp
-    @Column(name = "CreatedAt", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "UpdatedAt", nullable = false)
-    private LocalDateTime updatedAt;
+    @PrePersist
+    protected void onCreate() {
+        if (isPreview == null) {
+            isPreview = false;
+        }
+        if (orderIndex == null) {
+            orderIndex = 0;
+        }
+    }
 }
