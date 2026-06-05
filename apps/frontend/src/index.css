@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  background-color: #F9FAFB;
+  color: #23242D;
+  font-family: 'Noto Sans', sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom interactive scrollbars or other custom utilities if needed */
+::selection {
+  background-color: rgba(0, 96, 253, 0.2);
+  color: #0060FD;
+}
