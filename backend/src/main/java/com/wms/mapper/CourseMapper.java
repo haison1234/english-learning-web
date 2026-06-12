@@ -39,13 +39,13 @@ public class CourseMapper {
 
         Integer courseTypeInt = (course.getPrice() != null && course.getPrice().compareTo(java.math.BigDecimal.ZERO) > 0) ? 1 : 0;
         com.wms.enums.CourseType courseTypeEnum = com.wms.enums.CourseType.values()[courseTypeInt];
-        com.wms.enums.CourseStatus statusEnum = course.getStatus() != null ? com.wms.enums.CourseStatus.values()[course.getStatus()] : com.wms.enums.CourseStatus.DRAFT;
+        com.wms.enums.CourseStatus statusEnum = course.getStatus() != null ? course.getStatus() : com.wms.enums.CourseStatus.DRAFT;
 
         return CourseDTO.builder()
                 .id(course.getId())
                 .title(course.getTitle())
                 .description(description)
-                .level(course.getLevel() != null ? com.wms.enums.CourseLevel.values()[course.getLevel()] : com.wms.enums.CourseLevel.BEGINNER)
+                .level(course.getLevel() != null ? course.getLevel() : com.wms.enums.CourseLevel.BEGINNER)
                 .courseType(courseTypeEnum)
                 .basePrice(course.getPrice())
                 .thumbnailUrl(thumbnailUrl)
@@ -85,13 +85,13 @@ public class CourseMapper {
 
         Integer courseTypeInt = (course.getPrice() != null && course.getPrice().compareTo(java.math.BigDecimal.ZERO) > 0) ? 1 : 0;
         com.wms.enums.CourseType courseTypeEnum = com.wms.enums.CourseType.values()[courseTypeInt];
-        com.wms.enums.CourseStatus statusEnum = course.getStatus() != null ? com.wms.enums.CourseStatus.values()[course.getStatus()] : com.wms.enums.CourseStatus.DRAFT;
+        com.wms.enums.CourseStatus statusEnum = course.getStatus() != null ? course.getStatus() : com.wms.enums.CourseStatus.DRAFT;
 
         return CourseDetailDTO.builder()
                 .id(course.getId())
                 .title(course.getTitle())
                 .description(description)
-                .level(course.getLevel() != null ? com.wms.enums.CourseLevel.values()[course.getLevel()] : com.wms.enums.CourseLevel.BEGINNER)
+                .level(course.getLevel() != null ? course.getLevel() : com.wms.enums.CourseLevel.BEGINNER)
                 .courseType(courseTypeEnum)
                 .basePrice(course.getPrice())
                 .thumbnailUrl(thumbnailUrl)
@@ -127,7 +127,7 @@ public class CourseMapper {
                 .id(lesson.getId())
                 .courseId(lesson.getCourse() != null ? lesson.getCourse().getId() : null)
                 .title(lesson.getTitle())
-                .contentType(lesson.getType() != null ? com.wms.enums.LessonContentType.values()[lesson.getType()] : com.wms.enums.LessonContentType.VIDEO)
+                .contentType(lesson.getType() != null ? lesson.getType() : com.wms.enums.LessonContentType.VIDEO)
                 .contentUrl(contentUrl)
                 .textContent(textContent)
                 .durationSeconds(0)

@@ -3,3 +3,4 @@
 [08:38] RUN SUCCESS: App running at http://localhost:3000 (Vite port updated to solve Google OAuth origin mismatch).
 [08:40] RUN SUCCESS: App running at http://localhost:5173 (Vite port set back to 5173 since user authorized port 5173 in Google Console).
 [14:48] RUN SUCCESS: Backend restarted on 8080 (Lombok updated to 1.18.46 for JDK 21 compatibility), Frontend restarted on 5173.
+[16:21] DEBUG SUCCESS: Fixed VNPay payment issue (added missing backend configs in application.yml and corrected return port in PaymentReturnPage.tsx).

@@ -22,13 +22,13 @@ public class Course {
     private String title;
 
     @Column(nullable = false, columnDefinition = "TINYINT")
-    private Integer level; // 0: Beginner, 1: Intermediate, 2: Advanced
+    private com.wms.enums.CourseLevel level; // 0: Beginner, 1: Intermediate, 2: Advanced
 
     @Column(precision = 12, scale = 0)
     private BigDecimal price;
 
     @Column(columnDefinition = "TINYINT")
-    private Integer status; // 0: Draft, 1: Published
+    private com.wms.enums.CourseStatus status; // 0: Draft, 1: Published
 
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String metadata; // JSON: description, thumbnailUrl, trailerUrl
@@ -45,7 +45,7 @@ public class Course {
             price = BigDecimal.ZERO;
         }
         if (status == null) {
-            status = 0;
+            status = com.wms.enums.CourseStatus.DRAFT;
         }
     }
 }

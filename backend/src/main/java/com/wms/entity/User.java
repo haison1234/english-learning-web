@@ -27,7 +27,7 @@ public class User {
     private String passwordHash;
 
     @Column(columnDefinition = "TINYINT")
-    private Integer role; // 0: Admin, 1: Student
+    private com.wms.enums.UserRole role; // 0: Admin, 1: Student
 
     @Column(length = 512)
     private String verifyToken;
@@ -44,7 +44,7 @@ public class User {
             createdAt = LocalDateTime.now();
         }
         if (role == null) {
-            role = 1; // Default to Student
+            role = com.wms.enums.UserRole.STUDENT; // Default to Student
         }
     }
 }

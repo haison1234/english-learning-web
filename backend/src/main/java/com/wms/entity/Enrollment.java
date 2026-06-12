@@ -27,7 +27,7 @@ public class Enrollment {
     private Course course;
 
     @Column(columnDefinition = "TINYINT")
-    private Integer paymentStatus; // 0: Pending, 1: Success
+    private com.wms.enums.PaymentStatus paymentStatus; // 0: Pending, 1: Success
 
     @Column(precision = 12, scale = 0)
     private BigDecimal amount;
@@ -51,7 +51,7 @@ public class Enrollment {
             enrolledAt = LocalDateTime.now();
         }
         if (paymentStatus == null) {
-            paymentStatus = 0;
+            paymentStatus = com.wms.enums.PaymentStatus.PENDING;
         }
         if (amount == null) {
             amount = BigDecimal.ZERO;

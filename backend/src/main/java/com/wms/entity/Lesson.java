@@ -30,7 +30,7 @@ public class Lesson {
     private Integer orderIndex;
 
     @Column(columnDefinition = "TINYINT")
-    private Integer type; // 0: Video/Audio/Text, 1: Quiz
+    private com.wms.enums.LessonContentType type;
 
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String content; // JSON

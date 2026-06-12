@@ -5,9 +5,8 @@ import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
 public enum UserRole {
-    GUEST((byte) 0),
-    STUDENT((byte) 1),
-    ADMIN((byte) 2);
+    ADMIN((byte) 0),
+    STUDENT((byte) 1);
 
     private final byte value;
 

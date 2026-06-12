@@ -37,7 +37,7 @@ public class PaymentService {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new IllegalArgumentException("Khóa học không tồn tại!"));
 
-        if (course.getStatus() != null && course.getStatus() != 1) { // 1 = PUBLISHED
+        if (course.getStatus() != null && course.getStatus() != com.wms.enums.CourseStatus.PUBLISHED) { // 1 = PUBLISHED
             throw new IllegalStateException("Khóa học này chưa được xuất bản!");
         }
 
@@ -46,7 +46,7 @@ public class PaymentService {
 
         if (enrollmentRepository.existsByUserIdAndCourseId(userId, courseId)) {
             Enrollment existing = enrollmentRepository.findByUserIdAndCourseId(userId, courseId).get();
-            if (existing.getPaymentStatus() != null && existing.getPaymentStatus() == 1) {
+            if (existing.getPaymentStatus() == com.wms.enums.PaymentStatus.SUCCESS) {
                 throw new IllegalStateException("Bạn đã đăng ký khóa học này rồi!");
             } else {
                 // Xóa đăng ký cũ đang Pending để tạo lại
@@ -88,7 +88,7 @@ public class PaymentService {
                 .course(course)
                 .coupon(coupon)
                 .amount(finalPrice)
-                .paymentStatus(finalPrice.compareTo(BigDecimal.ZERO) == 0 ? 1 : 0) // 1 = SUCCESS, 0 = PENDING
+                .paymentStatus(finalPrice.compareTo(BigDecimal.ZERO) == 0 ? com.wms.enums.PaymentStatus.SUCCESS : com.wms.enums.PaymentStatus.PENDING) // 1 = SUCCESS, 0 = PENDING
                 .progressData("{}") // JSON lưu vết rỗng
                 .build();
 
@@ -189,12 +189,12 @@ public class PaymentService {
             throw new SecurityException("Bạn không có quyền xác nhận giao dịch này!");
         }
 
-        if (enrollment.getPaymentStatus() != null && enrollment.getPaymentStatus() == 1) {
+        if (enrollment.getPaymentStatus() == com.wms.enums.PaymentStatus.SUCCESS) {
             throw new IllegalStateException("Giao dịch này đã được xử lý rồi!");
         }
 
         // Cập nhật trạng thái thanh toán thành công
-        enrollment.setPaymentStatus(1);
+        enrollment.setPaymentStatus(com.wms.enums.PaymentStatus.SUCCESS);
         enrollmentRepository.save(enrollment);
 
         // Cập nhật used count của coupon
@@ -221,9 +221,9 @@ public class PaymentService {
                     .originalPrice(e.getCourse().getPrice())
                     .finalPrice(e.getAmount())
                     .currency("VND")
-                    .status(e.getPaymentStatus() != null && e.getPaymentStatus() == 1 ? com.wms.enums.PaymentStatus.SUCCESS : com.wms.enums.PaymentStatus.PENDING)
+                    .status(e.getPaymentStatus() != null ? e.getPaymentStatus() : com.wms.enums.PaymentStatus.PENDING)
                     .createdAt(e.getEnrolledAt())
-                    .paidAt(e.getPaymentStatus() != null && e.getPaymentStatus() == 1 ? e.getEnrolledAt() : null)
+                    .paidAt(e.getPaymentStatus() == com.wms.enums.PaymentStatus.SUCCESS ? e.getEnrolledAt() : null)
                     .build();
         }).collect(Collectors.toList());
     }
@@ -302,13 +302,13 @@ public class PaymentService {
             }
             
             Enrollment enrollment = enrollmentOpt.get();
-            if (enrollment.getPaymentStatus() != null && enrollment.getPaymentStatus() == 1) {
+            if (enrollment.getPaymentStatus() == com.wms.enums.PaymentStatus.SUCCESS) {
                 return PaymentResponseDTO.builder().status("02").message("Order already confirmed").build();
             }
             
             if ("00".equals(vnp_ResponseCode)) {
                 // Success
-                enrollment.setPaymentStatus(1); // 1 = SUCCESS
+                enrollment.setPaymentStatus(com.wms.enums.PaymentStatus.SUCCESS); // 1 = SUCCESS
                 
                 // Update used count of coupon
                 if (enrollment.getCoupon() != null) {
@@ -355,8 +355,8 @@ public class PaymentService {
                 Optional<Enrollment> enrollmentOpt = enrollmentRepository.findById(enrollmentId);
                 if (enrollmentOpt.isPresent()) {
                     Enrollment enrollment = enrollmentOpt.get();
-                    if (enrollment.getPaymentStatus() == null || enrollment.getPaymentStatus() == 0) {
-                        enrollment.setPaymentStatus(1);
+                    if (enrollment.getPaymentStatus() == null || enrollment.getPaymentStatus() == com.wms.enums.PaymentStatus.PENDING) {
+                        enrollment.setPaymentStatus(com.wms.enums.PaymentStatus.SUCCESS);
                         
                         if (enrollment.getCoupon() != null) {
                             Coupon c = enrollment.getCoupon();

@@ -72,7 +72,7 @@ public class AuthAspect {
 
         String[] allowedRoles = requireAuth.value();
         if (allowedRoles.length > 0) {
-            String userRole = user.getRole() != null && user.getRole() == 0 ? "ADMIN" : "STUDENT";
+            String userRole = user.getRole() == com.wms.enums.UserRole.ADMIN ? "ADMIN" : "STUDENT";
             boolean hasPermission = Arrays.asList(allowedRoles).contains(userRole);
             if (!hasPermission) {
                 throw new ForbiddenException("Bạn không có quyền truy cập chức năng này!");

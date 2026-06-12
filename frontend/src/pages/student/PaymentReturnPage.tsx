@@ -14,8 +14,9 @@ const PaymentReturnPage: React.FC = () => {
             try {
                 const searchParams = location.search;
                 const token = localStorage.getItem('token');
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
                 
-                const response = await fetch(`http://localhost:9090/api/v1/payments/vnpay-return${searchParams}`, {
+                const response = await fetch(`${apiUrl}/api/v1/payments/vnpay-return${searchParams}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`

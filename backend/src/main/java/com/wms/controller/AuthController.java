@@ -84,8 +84,8 @@ public class AuthController {
                     .fullName(user.getFullName())
                     .email(user.getEmail())
                     .avatarUrl(user.getMetadata())
-                    .role(null)
-                    .status(null)
+                    .role(user.getRole())
+                    .status(com.wms.enums.UserStatus.ACTIVE)
                     .emailVerified(user.getVerifyToken() == null)
                     .oAuthProvider(null)
                     .oAuthId(null)
@@ -131,7 +131,7 @@ public class AuthController {
                     .fullName(request.getFullName())
                     .email(request.getEmail())
                     .passwordHash(hashed)
-                    .role(1)
+                    .role(com.wms.enums.UserRole.STUDENT)
                     .build();
             
             userRepository.save(user);
@@ -141,8 +141,8 @@ public class AuthController {
                     .id(user.getId())
                     .fullName(user.getFullName())
                     .email(user.getEmail())
-                    .role(null)
-                    .status(null)
+                    .role(user.getRole())
+                    .status(com.wms.enums.UserStatus.ACTIVE)
                     .emailVerified(false)
                     .build();
 
@@ -195,7 +195,7 @@ public class AuthController {
                         .fullName(fullName)
                         .email(email)
                         .metadata("{\"avatarUrl\":\"" + avatarUrl + "\",\"googleId\":\"" + googleSubId + "\"}")
-                        .role(1)
+                        .role(com.wms.enums.UserRole.STUDENT)
                         .verifyToken("verified")
                         .build();
                 userRepository.save(user);
@@ -207,8 +207,8 @@ public class AuthController {
                     .fullName(user.getFullName())
                     .email(user.getEmail())
                     .avatarUrl(user.getMetadata())
-                    .role(null)
-                    .status(null)
+                    .role(user.getRole())
+                    .status(com.wms.enums.UserStatus.ACTIVE)
                     .emailVerified(true)
                     .oAuthProvider(null)
                     .oAuthId(null)

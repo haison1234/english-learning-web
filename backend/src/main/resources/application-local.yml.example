@@ -8,3 +8,11 @@
 google:
   client-id: "NHAP_GOOGLE_CLIENT_ID_CUA_BAN_TAI_DAY"
   client-secret: "NHAP_GOOGLE_CLIENT_SECRET_CUA_BAN_TAI_DAY"
+
+# Cấu hình cổng thanh toán VNPay (Tùy chọn ghi đè cấu hình Sandbox mặc định ở application.yml)
+# vnpay:
+#   tmn-code: "NHAP_TMN_CODE_VNPAY_CUA_BAN"
+#   hash-secret: "NHAP_HASH_SECRET_VNPAY_CUA_BAN"
+#   url: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+#   return-url: "http://localhost:5173/payment/vnpay-return"
+

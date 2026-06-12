@@ -40,3 +40,10 @@ jwt:
   secret: yourSuperSecretKeyMustBeAtLeast256BitsLongForHMACSHA256Algorithm123456
   expiration: 3600000
   refresh-expiration: 604800000
+
+vnpay:
+  tmn-code: ${VNPAY_TMN_CODE:2QXUIOJ7}
+  hash-secret: ${VNPAY_HASH_SECRET:UZDPHJNYXHRNZZGTOHZZEXBUZZVXOZMK}
+  url: ${VNPAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+  return-url: ${VNPAY_RETURN_URL:http://localhost:5173/payment/vnpay-return}
+
