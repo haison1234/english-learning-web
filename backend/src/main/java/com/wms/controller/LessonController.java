@@ -1,9 +1,11 @@
 package com.wms.controller;
 
+import com.wms.dto.AssignmentCreateRequestDTO;
 import com.wms.dto.LessonCreateRequestDTO;
 import com.wms.dto.LessonDTO;
 import com.wms.dto.LessonReorderRequestDTO;
 import com.wms.service.LessonService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -59,6 +61,26 @@ public class LessonController {
     @ResponseStatus(HttpStatus.OK)
     public void reorderLessons(@RequestBody List<LessonReorderRequestDTO> requests) {
         lessonService.reorderLessons(requests);
+    }
+    @PostMapping("/course/{courseId}/assignment")
+    @ResponseStatus(HttpStatus.CREATED)
+    public LessonDTO createAssignment(
+            @PathVariable UUID courseId,
+            @Valid @RequestBody AssignmentCreateRequestDTO request) {
+        return lessonService.createAssignment(courseId, request);
+    }
+    // Lấy chi tiết bài tập để Admin xem
+    @GetMapping("/assignment/{lessonId}")
+    public AssignmentCreateRequestDTO getAssignment(@PathVariable UUID lessonId) {
+        return lessonService.getAssignment(lessonId);
+    }
+
+    // Sửa bài tập
+    @PutMapping("/assignment/{lessonId}")
+    public LessonDTO updateAssignment(
+            @PathVariable UUID lessonId,
+            @RequestBody AssignmentCreateRequestDTO request) {
+        return lessonService.updateAssignment(lessonId, request);
     }
 
 }

@@ -1,11 +1,13 @@
 package com.wms.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wms.dto.AssignmentCreateRequestDTO;
 import com.wms.dto.LessonCreateRequestDTO;
 import com.wms.dto.LessonDTO;
 import com.wms.dto.LessonReorderRequestDTO;
 import com.wms.entity.Course;
 import com.wms.entity.Lesson;
+import com.wms.enums.LessonContentType;
 import com.wms.exception.ResourceNotFoundException;
 import com.wms.mapper.CourseMapper;
 import com.wms.repository.CourseRepository;
@@ -99,6 +101,71 @@ public class LessonService {
             lesson.setOrderIndex(req.getNewOrderIndex());
             lessonRepository.save(lesson);
         }
+    }
+
+    @Transactional
+    public LessonDTO createAssignment(UUID courseId, AssignmentCreateRequestDTO request) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khóa học không tồn tại"));
+
+        Lesson lesson = new Lesson();
+        lesson.setCourse(course);
+        lesson.setTitle(request.getTitle());
+        lesson.setType(LessonContentType.QUIZ);
+
+        int nextOrder = lessonRepository.findByCourseIdOrderByOrderIndexAsc(courseId).size();
+        lesson.setOrderIndex(nextOrder);
+
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+            mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            String jsonContent = mapper.writeValueAsString(request);
+            System.out.println("DEBUG JSON: " + jsonContent);
+            lesson.setContent(jsonContent);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi ép kiểu dữ liệu bài tập: " + e.getMessage());
+        }
+        return courseMapper.toLessonDTO(lessonRepository.save(lesson));
+    }
+
+    @Transactional
+    public AssignmentCreateRequestDTO getAssignment(UUID lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bài học không tồn tại"));
+
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+            mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+            String jsonContent = lesson.getContent();
+
+            AssignmentCreateRequestDTO assignment = mapper.readValue(jsonContent, AssignmentCreateRequestDTO.class);
+            return assignment;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi đọc dữ liệu bài tập: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public LessonDTO updateAssignment(UUID lessonId, AssignmentCreateRequestDTO request) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bài học không tồn tại"));
+
+        // Cập nhật thông tin cơ bản
+        lesson.setTitle(request.getTitle());
+
+        // Nén lại dữ liệu mới vào JSON
+        try {
+            lesson.setContent(objectMapper.writeValueAsString(request));
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi cập nhật bài tập");
+        }
+
+        return courseMapper.toLessonDTO(lessonRepository.save(lesson));
     }
 
 }

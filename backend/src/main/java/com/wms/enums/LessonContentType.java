@@ -9,7 +9,9 @@ public enum LessonContentType {
     VIDEO((byte) 0),
     AUDIO((byte) 1),
     TEXT((byte) 2),
-    PDF((byte) 3);
+    PDF((byte) 3),
+    QUIZ((byte) 4);
+
 
     private final byte value;
 
