@@ -2,6 +2,7 @@ package com.wms.service;
 
 import com.wms.dto.*;
 import com.wms.entity.*;
+import com.wms.enums.CourseStatus;
 import com.wms.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -37,7 +38,7 @@ public class PaymentService {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new IllegalArgumentException("Khóa học không tồn tại!"));
 
-        if (course.getStatus() != null && course.getStatus() != 1) { // 1 = PUBLISHED
+        if (course.getStatus() != null && course.getStatus() != CourseStatus.PUBLISHED) {
             throw new IllegalStateException("Khóa học này chưa được xuất bản!");
         }
 

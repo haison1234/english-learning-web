@@ -1,7 +1,9 @@
 package com.wms.entity;
 
+import com.wms.enums.LessonContentType;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.UUID;
 
 @Entity
@@ -12,28 +14,30 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class Lesson {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "Id")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CourseId", nullable = false)
     private Course course;
 
-    @Column(nullable = false, length = 300)
+    @Column(name = "Title", nullable = false, length = 300)
     private String title;
 
-    @Column(columnDefinition = "BIT DEFAULT 0")
+    @Column(name = "IsPreview", columnDefinition = "BIT DEFAULT 0")
     private Boolean isPreview;
 
-    @Column(columnDefinition = "INT DEFAULT 0")
+    @Column(name = "OrderIndex", columnDefinition = "INT DEFAULT 0")
     private Integer orderIndex;
 
-    @Column(columnDefinition = "TINYINT")
-    private Integer type; // 0: Video/Audio/Text, 1: Quiz
+    @Column(name = "Type", columnDefinition = "TINYINT")
+    private LessonContentType type;
 
-    @Column(columnDefinition = "NVARCHAR(MAX)")
-    private String content; // JSON
+    @Column(name = "Content", columnDefinition = "NVARCHAR(MAX)")
+    private String content;
 
     @PrePersist
     protected void onCreate() {
