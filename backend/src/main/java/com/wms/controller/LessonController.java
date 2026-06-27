@@ -43,20 +43,13 @@ public class LessonController {
         return lessonService.updateLesson(id, request);
     }
 
-    /**
-     * API Xóa một bài học
-     * DELETE http://localhost:8080/api/v1/lessons/{id}
-     */
+
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT) // Trả về HTTP Status 204 khi xóa thành công
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteLesson(@PathVariable UUID id) {
         lessonService.deleteLesson(id);
     }
 
-    /**
-     * API Thay đổi thứ tự danh sách bài học (Kéo thả)
-     * PUT http://localhost:8080/api/v1/lessons/reorder
-     */
     @PutMapping("/reorder")
     @ResponseStatus(HttpStatus.OK)
     public void reorderLessons(@RequestBody List<LessonReorderRequestDTO> requests) {
