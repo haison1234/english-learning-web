@@ -133,7 +133,7 @@ public class ReportService {
         if (enrollment.getProgressData() != null && !enrollment.getProgressData().isEmpty()) {
             try {
                 JsonNode rootNode = objectMapper.readTree(enrollment.getProgressData());
-                
+
                 JsonNode lessonNode = rootNode.get(lessonIdStr.toLowerCase());
                 if (lessonNode == null) {
                     lessonNode = rootNode.get(lessonIdStr.toUpperCase());

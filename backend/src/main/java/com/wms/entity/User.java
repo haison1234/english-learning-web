@@ -1,5 +1,7 @@
 package com.wms.entity;
 
+
+import com.wms.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -35,6 +37,9 @@ public class User {
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String metadata; // JSON: AvatarUrl, NotificationSettings, GoogleId
 
+    @Column(columnDefinition = "TINYINT")
+    private UserStatus status;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
@@ -45,6 +50,9 @@ public class User {
         }
         if (role == null) {
             role = 1; // Default to Student
+        }
+        if (status == null) {
+            status = UserStatus.ACTIVE;
         }
     }
 }
