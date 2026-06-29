@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "Users")
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,27 +15,28 @@ import java.util.UUID;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id")
     private UUID id;
 
-    @Column(nullable = false, length = 150)
+    @Column(name = "full_name", nullable = false, length = 150)
     private String fullName;
 
-    @Column(nullable = false, unique = true, length = 255)
+    @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(length = 512)
+    @Column(name = "password_hash", length = 512)
     private String passwordHash;
 
-    @Column(columnDefinition = "TINYINT")
+    @Column(name = "role", columnDefinition = "TINYINT")
     private com.wms.enums.UserRole role; // 0: Admin, 1: Student
 
-    @Column(length = 512)
+    @Column(name = "verify_token", length = 512)
     private String verifyToken;
 
-    @Column(columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "metadata", columnDefinition = "NVARCHAR(MAX)")
     private String metadata; // JSON: AvatarUrl, NotificationSettings, GoogleId
 
-    @Column(updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist

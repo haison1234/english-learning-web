@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "Courses")
+@Table(name = "courses")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,24 +16,25 @@ import java.util.UUID;
 public class Course {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id")
     private UUID id;
 
-    @Column(nullable = false, length = 300)
+    @Column(name = "title", nullable = false, length = 300)
     private String title;
 
-    @Column(nullable = false, columnDefinition = "TINYINT")
+    @Column(name = "level", nullable = false, columnDefinition = "TINYINT")
     private com.wms.enums.CourseLevel level; // 0: Beginner, 1: Intermediate, 2: Advanced
 
-    @Column(precision = 12, scale = 0)
+    @Column(name = "price", precision = 12, scale = 0)
     private BigDecimal price;
 
-    @Column(columnDefinition = "TINYINT")
+    @Column(name = "status", columnDefinition = "TINYINT")
     private com.wms.enums.CourseStatus status; // 0: Draft, 1: Published
 
-    @Column(columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "metadata", columnDefinition = "NVARCHAR(MAX)")
     private String metadata; // JSON: description, thumbnailUrl, trailerUrl
 
-    @Column(updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
