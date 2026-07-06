@@ -7,8 +7,6 @@ import com.wms.dto.LoginRequest;
 import com.wms.dto.RegisterRequest;
 import com.wms.dto.UserDTO;
 import com.wms.entity.User;
-import com.wms.enums.UserRole;
-import com.wms.enums.UserStatus;
 import com.wms.repository.UserRepository;
 import com.wms.service.GoogleAuthService;
 import jakarta.validation.Valid;
@@ -36,12 +34,13 @@ public class AuthController {
             System.out.println("==================================================");
             System.out.println("📥 RECEIVED LOGIN REQUEST FOR EMAIL: " + request.getEmail());
             System.out.println("==================================================");
-            
+
             // 1. Fetch User
             Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
             if (userOptional.isEmpty()) {
                 System.out.println("❌ USER NOT FOUND FOR EMAIL: " + request.getEmail());
-                return ResponseEntity.status(401).body(java.util.Map.of("message", "Email hoặc mật khẩu không chính xác!"));
+                return ResponseEntity.status(401)
+                        .body(java.util.Map.of("message", "Email hoặc mật khẩu không chính xác!"));
             }
 
             User user = userOptional.get();
@@ -53,17 +52,18 @@ public class AuthController {
             boolean passwordMatches = false;
             if (user.getPasswordHash() != null) {
                 try {
-                    passwordMatches = org.springframework.security.crypto.bcrypt.BCrypt.checkpw(request.getPassword(), user.getPasswordHash());
+                    passwordMatches = org.springframework.security.crypto.bcrypt.BCrypt.checkpw(request.getPassword(),
+                            user.getPasswordHash());
                     System.out.println("🔍 BCrypt checkpw result: " + passwordMatches);
                 } catch (Exception e) {
                     System.out.println("⚠️ BCrypt checkpw threw exception (invalid hash format): " + e.getMessage());
                 }
-                
+
                 // Fallback check if BCrypt failed or threw exception
                 if (!passwordMatches) {
-                    passwordMatches = request.getPassword().equals("admin") 
-                            || request.getPassword().equals("admin123") 
-                            || request.getPassword().equals("123456") 
+                    passwordMatches = request.getPassword().equals("admin")
+                            || request.getPassword().equals("admin123")
+                            || request.getPassword().equals("123456")
                             || request.getPassword().equals("mật khẩu mẫu");
                     System.out.println("🔍 Fallback check result: " + passwordMatches);
                 }
@@ -75,7 +75,8 @@ public class AuthController {
 
             if (!passwordMatches) {
                 System.out.println("❌ PASSWORD VERIFICATION FAILED FOR EMAIL: " + request.getEmail());
-                return ResponseEntity.status(401).body(java.util.Map.of("message", "Email hoặc mật khẩu không chính xác!"));
+                return ResponseEntity.status(401)
+                        .body(java.util.Map.of("message", "Email hoặc mật khẩu không chính xác!"));
             }
 
             // 3. Map User to UserDTO
@@ -124,7 +125,8 @@ public class AuthController {
             }
 
             // 2. Hash password
-            String hashed = org.springframework.security.crypto.bcrypt.BCrypt.hashpw(request.getPassword(), org.springframework.security.crypto.bcrypt.BCrypt.gensalt());
+            String hashed = org.springframework.security.crypto.bcrypt.BCrypt.hashpw(request.getPassword(),
+                    org.springframework.security.crypto.bcrypt.BCrypt.gensalt());
 
             // 3. Create and save user
             User user = User.builder()
@@ -133,7 +135,7 @@ public class AuthController {
                     .passwordHash(hashed)
                     .role(1)
                     .build();
-            
+
             userRepository.save(user);
 
             // 4. Map to UserDTO
@@ -170,7 +172,7 @@ public class AuthController {
             System.out.println("==================================================");
             System.out.println("📥 RECEIVED GOOGLE LOGIN REQUEST WITH CODE!");
             System.out.println("==================================================");
-            
+
             // 1. Verify Google Authorization Code and get the user payload
             GoogleIdToken.Payload googleUser = googleAuthService.verifyGoogleCode(request.getCode());
 
@@ -216,7 +218,8 @@ public class AuthController {
                     .updatedAt(null)
                     .build();
 
-            // 4. Generate local authentication tokens (placeholder tokens that React will store)
+            // 4. Generate local authentication tokens (placeholder tokens that React will
+            // store)
             String localAccessToken = "demo-access-token-for-" + user.getEmail();
             String localRefreshToken = "demo-refresh-token-for-" + user.getEmail();
 

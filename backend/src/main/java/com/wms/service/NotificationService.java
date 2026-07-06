@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -62,7 +61,8 @@ public class NotificationService {
             return mapToDTO(savedCampaign);
         }
 
-        // 3. Xử lý gửi IN_APP (0) hoặc BOTH (2): Insert vào bảng Notifications từng dòng cho mỗi User
+        // 3. Xử lý gửi IN_APP (0) hoặc BOTH (2): Insert vào bảng Notifications từng
+        // dòng cho mỗi User
         if (request.getType() == 0 || request.getType() == 2) {
             List<Notification> inAppNotifications = targetUsers.stream()
                     .map(user -> Notification.builder()
@@ -102,7 +102,8 @@ public class NotificationService {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom("noreply@elearning.com");
-            // Sử dụng BCC để gửi đồng thời cho nhiều học sinh mà không lộ danh sách email của nhau
+            // Sử dụng BCC để gửi đồng thời cho nhiều học sinh mà không lộ danh sách email
+            // của nhau
             message.setBcc(emails.toArray(new String[0]));
             message.setSubject(subject);
             message.setText(text);
