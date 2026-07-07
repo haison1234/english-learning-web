@@ -28,14 +28,12 @@ BEGIN
             SYSUTCDATETIME());
 
     -- Lesson 1 (Video)
-    INSERT INTO Lessons (Id, CourseId, Title, IsPreview, OrderIndex, Type, Content, CreatedAt)
+    INSERT INTO Lessons (Id, CourseId, Title, IsPreview, OrderIndex, Type, Content)
     VALUES (NEWID(), @CourseId, N'Lesson 1: Introduction to English', 1, 1, 0, 
-            N'{"videoUrl":"https://www.youtube.com/embed/dQw4w9WgXcQ","duration":180}', 
-            SYSUTCDATETIME());
+            N'{"videoUrl":"https://www.youtube.com/embed/dQw4w9WgXcQ","duration":180}');
 
     -- Lesson 2 (Quiz)
-    INSERT INTO Lessons (Id, CourseId, Title, IsPreview, OrderIndex, Type, Content, CreatedAt)
+    INSERT INTO Lessons (Id, CourseId, Title, IsPreview, OrderIndex, Type, Content)
     VALUES (NEWID(), @CourseId, N'Lesson 2: Basic Grammar Quiz', 0, 2, 1, 
-            N'{"questions":[{"id":"1","content":"What is the capital of England?","options":["Paris","London","Berlin","Rome"],"correctAnswer":"London"}]}', 
-            SYSUTCDATETIME());
+            N'{"questions":[{"id":"1","content":"What is the capital of England?","options":["Paris","London","Berlin","Rome"],"correctAnswer":"London"}]}');
 END

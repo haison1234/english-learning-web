@@ -7,8 +7,8 @@ export interface UserProfile {
   fullName: string;
   email: string;
   avatarUrl: string | null;
-  role: 'GUEST' | 'STUDENT' | 'ADMIN';
-  status: 'INACTIVE' | 'ACTIVE';
+  role: 'GUEST' | 'STUDENT' | 'ADMIN' | number;
+  status: 'INACTIVE' | 'ACTIVE' | number;
 }
 
 export interface AuthResponse {

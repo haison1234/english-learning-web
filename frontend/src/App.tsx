@@ -162,7 +162,7 @@ function AppInner() {
             setUser(profile)
             close()
             // Sau khi login xong, redirect sang student hoặc admin tùy role
-            if (profile.role === 'ADMIN') {
+            if (profile.role === 0 || profile.role === 'ADMIN') {
               window.location.href = '/admin';
             } else {
               window.location.href = '/student';

@@ -8,7 +8,7 @@ export default function AdminRoute() {
     return <Navigate to="/" replace />;
   }
 
-  if (user.role !== 'ADMIN') {
+  if (user.role !== 0 && user.role !== 'ADMIN') {
     return <Navigate to="/student" replace />;
   }
 
