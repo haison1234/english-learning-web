@@ -1,5 +1,6 @@
 package com.wms.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
@@ -20,11 +21,15 @@ public enum QuestionType {
         return value;
     }
 
-    public static QuestionType fromValue(byte value) {
-        for (QuestionType type : QuestionType.values()) {
-            if (type.value == value) {
-                return type;
+    @JsonCreator
+    public static QuestionType fromValue(Object value) {
+        if (value instanceof Number) {
+            byte b = ((Number) value).byteValue();
+            for (QuestionType type : QuestionType.values()) {
+                if (type.value == b) return type;
             }
+        } else if (value instanceof String) {
+            return QuestionType.valueOf(((String) value).toUpperCase());
         }
         throw new IllegalArgumentException("Unknown question type: " + value);
     }

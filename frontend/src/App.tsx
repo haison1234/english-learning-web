@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AuthModal, { useAuthModal } from './components/AuthModal'
 import CertificateModal from './components/CertificateModal'
 import PricingModal from './components/PricingModal'
@@ -17,6 +17,16 @@ import StudyRoom from './pages/student/StudyRoom'
 import CheckoutPageWrapper from './pages/student/CheckoutPageWrapper'
 
 import PaymentReturnPage from './pages/student/PaymentReturnPage'
+
+// Admin Pages
+import AdminRoute from './components/common/AdminRoute'
+import AdminLayout from './pages/admin/AdminLayout'
+import AdminDashboardPage from './pages/admin/AdminDashboardPage'
+import AdminCoursesPage from './pages/admin/AdminCoursesPage'
+import AdminCourseDetailPage from './pages/admin/AdminCourseDetailPage'
+import AdminUsersPage from './pages/admin/AdminUsersPage'
+import AdminNotificationsPage from './pages/admin/AdminNotificationsPage'
+import AdminCouponsPage from './pages/admin/AdminCouponsPage'
 
 function AppInner() {
   const { modal, open, close } = useAuthModal()
@@ -89,11 +99,24 @@ function AppInner() {
             <Route path="/student/study/:courseId" element={<StudyRoom user={user} />} />
             <Route path="/student/checkout" element={<CheckoutPageWrapper onSuccess={handlePaymentSuccess} />} />
           </Route>
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminRoute />}>
+            <Route element={<AdminLayout />}>
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="courses" element={<AdminCoursesPage />} />
+              <Route path="courses/:courseId" element={<AdminCourseDetailPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="notifications" element={<AdminNotificationsPage />} />
+              <Route path="coupons" element={<AdminCouponsPage />} />
+            </Route>
+          </Route>
         </Routes>
 
         {/* ── Footer (Chỉ hiện khi ở Public, xử lý ẩn hiện bên trong component nếu cần hoặc dùng hook useLocation. Tạm thời render cố định dưới Routes, các trang full screen như Dashboard/StudyRoom có bg cover) ── */}
         <Routes>
           <Route path="/student/*" element={null} /> {/* Ẩn footer ở luồng student */}
+          <Route path="/admin/*" element={null} /> {/* Ẩn footer ở luồng admin */}
           <Route path="*" element={
             <footer className="bg-white border-t border-grayBorder py-12 mt-auto">
               <div className="max-w-[1440px] mx-auto px-6 sm:px-8 md:px-12 grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -138,8 +161,12 @@ function AppInner() {
           onSuccess={(profile) => {
             setUser(profile)
             close()
-            // Sau khi login xong, redirect sang student
-            window.location.href = '/student';
+            // Sau khi login xong, redirect sang student hoặc admin tùy role
+            if (profile.role === 'ADMIN') {
+              window.location.href = '/admin';
+            } else {
+              window.location.href = '/student';
+            }
           }}
         />
         <CertificateModal isOpen={certificateOpen} onClose={() => setCertificateOpen(false)} />

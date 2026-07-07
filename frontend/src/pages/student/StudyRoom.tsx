@@ -1,187 +1,218 @@
-import { useState, useEffect } from 'react'
-import { ArrowLeft, BookMarked, Award, CheckCircle, AlertCircle, Send } from 'lucide-react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import type { Dispatch, ElementType, MutableRefObject, SetStateAction } from 'react'
+import {
+  AlertCircle,
+  ArrowLeft,
+  BookOpen,
+  CheckCircle,
+  Circle,
+  ClipboardList,
+  FileText,
+  History,
+  Play,
+  Send,
+} from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { UserProfile } from '../../services/authService'
-import { getCourseDetail, CourseDetailDTO, LessonDTO } from '../../services/courseService'
+import {
+  CourseLearningDTO,
+  ExerciseAttemptDTO,
+  ExerciseQuestionDTO,
+  ExerciseSubmitResponse,
+  LearningLessonDTO,
+  getCourseLearning,
+  getExerciseAttempts,
+  getLessonExercises,
+  submitLessonExercise,
+  updateLessonProgress,
+} from '../../services/learningService'
 
 interface StudyRoomProps {
   user: UserProfile | null
 }
 
-interface CommentItem {
-  id: number
-  author: string
-  content: string
-  time: string
-  likes: number
-}
+type StudyTab = 'content' | 'exercise' | 'history'
 
 export default function StudyRoom({ user }: StudyRoomProps) {
   const { courseId } = useParams<{ courseId: string }>()
   const navigate = useNavigate()
+  const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement | null>(null)
+  const lastSavedSecondRef = useRef(0)
 
-  const [activeCourse, setActiveCourse] = useState<CourseDetailDTO | null>(null)
-  const [activeLesson, setActiveLesson] = useState<LessonDTO | null>(null)
-  const [activeStudyTab, setActiveStudyTab] = useState<'lecture' | 'exercise' | 'qa'>('lecture')
+  const [course, setCourse] = useState<CourseLearningDTO | null>(null)
+  const [activeLesson, setActiveLesson] = useState<LearningLessonDTO | null>(null)
+  const [activeTab, setActiveTab] = useState<StudyTab>('content')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Exercise interactions
-  const [selectedMCAnswer, setSelectedMCAnswer] = useState<string | null>(null)
-  const [fillBlankAnswer, setFillBlankAnswer] = useState('')
-  const [matchedPairs, setMatchedPairs] = useState<Record<string, string>>({})
-  const [selectedWord, setSelectedWord] = useState<string | null>(null)
-  const [selectedDef, setSelectedDef] = useState<string | null>(null)
-  const [exerciseSubmitted, setExerciseSubmitted] = useState(false)
-  const [exerciseResult, setExerciseResult] = useState<boolean | null>(null)
-
-  // Comments
-  const [comments, setComments] = useState<CommentItem[]>([
-    { id: 1, author: 'Lê Minh Tâm', content: 'Bài giảng rất hay và trực quan, phần phát âm âm đuôi thầy hướng dẫn rất chi tiết!', time: '10 phút trước', likes: 4 },
-    { id: 2, author: 'Hoàng Thùy Dương', content: 'Mọi người cho mình hỏi ở câu trắc nghiệm số 2, tại sao lại dùng hiện tại hoàn thành thay vì quá khứ đơn thế?', time: '1 giờ trước', likes: 1 }
-  ])
-  const [newCommentText, setNewCommentText] = useState('')
-
-  // Completed lessons tracker
-  const [completedLessons, setCompletedLessons] = useState<Record<string, boolean>>({})
+  const [exercises, setExercises] = useState<ExerciseQuestionDTO[]>([])
+  const [answers, setAnswers] = useState<Record<string, unknown>>({})
+  const [submitResult, setSubmitResult] = useState<ExerciseSubmitResponse | null>(null)
+  const [attempts, setAttempts] = useState<ExerciseAttemptDTO[]>([])
+  const [exerciseLoading, setExerciseLoading] = useState(false)
 
   useEffect(() => {
     async function loadCourse() {
       if (!courseId) return
       try {
         setLoading(true)
-        const data = await getCourseDetail(courseId)
-        setActiveCourse(data)
-        if (data.lessons && data.lessons.length > 0) {
-          const sortedLessons = [...data.lessons].sort((a, b) => a.orderIndex - b.orderIndex)
-          setActiveLesson(sortedLessons[0])
-        }
+        setError(null)
+        const data = await getCourseLearning(courseId)
+        setCourse(data)
+        setActiveLesson(pickInitialLesson(data.lessons))
       } catch (err) {
-        console.error('Không thể mở phòng học:', err)
-        alert('Có lỗi xảy ra khi tải nội dung học tập.')
-        navigate('/student')
+        setError(err instanceof Error ? err.message : 'Khong the tai phong hoc.')
       } finally {
         setLoading(false)
       }
     }
+
     loadCourse()
-  }, [courseId, navigate])
+  }, [courseId])
+
+  useEffect(() => {
+    async function loadLessonExercise() {
+      if (!courseId || !activeLesson) return
+
+      setAnswers({})
+      setSubmitResult(null)
+      setExerciseLoading(true)
+      lastSavedSecondRef.current = activeLesson.positionSeconds || 0
+
+      try {
+        if (activeLesson.progressStatus === 'NOT_STARTED') {
+          const progress = await updateLessonProgress(courseId, activeLesson.id, {
+            positionSeconds: activeLesson.positionSeconds,
+            timeSpentSeconds: activeLesson.timeSpentSeconds,
+          })
+          applyProgress(progress.lessonId, progress.progressStatus, progress.completed, progress.positionSeconds)
+        }
+
+        const [questions, history] = await Promise.all([
+          getLessonExercises(courseId, activeLesson.id),
+          getExerciseAttempts(courseId, activeLesson.id),
+        ])
+        setExercises(questions)
+        setAttempts(history)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Khong the tai bai tap.')
+      } finally {
+        setExerciseLoading(false)
+      }
+    }
+
+    loadLessonExercise()
+  }, [courseId, activeLesson?.id])
 
   if (!user) return null
 
   if (loading) {
     return (
       <div className="min-h-screen bg-offWhite1 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-actionBlue"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-actionBlue" />
       </div>
     )
   }
 
-  if (!activeCourse || !activeLesson) {
+  if (error || !course || !activeLesson) {
     return (
-      <div className="min-h-screen bg-offWhite1 flex items-center justify-center">
-        <p className="text-secondaryText">Không tìm thấy nội dung bài học.</p>
+      <div className="min-h-screen bg-offWhite1 flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <AlertCircle className="text-red-500" size={32} />
+        <p className="text-sm text-secondaryText">{error || 'Khong tim thay noi dung khoa hoc.'}</p>
+        <button
+          onClick={() => navigate('/student')}
+          className="px-4 py-2 rounded-full bg-actionBlue text-white font-bold text-sm"
+        >
+          Quay lai dashboard
+        </button>
       </div>
     )
   }
 
-  const handleSelectLesson = (lesson: LessonDTO) => {
+  const orderedLessons = [...course.lessons].sort((a, b) => a.orderIndex - b.orderIndex)
+
+  async function refreshCourse(selectedLessonId: string) {
+    if (!courseId) return
+    const data = await getCourseLearning(courseId)
+    setCourse(data)
+    const selected = data.lessons.find((lesson) => lesson.id === selectedLessonId) || pickInitialLesson(data.lessons)
+    setActiveLesson(selected)
+  }
+
+  function applyProgress(lessonId: string, status: LearningLessonDTO['progressStatus'], completed: boolean, position: number) {
+    setActiveLesson((current) => current && current.id === lessonId
+      ? { ...current, progressStatus: status, completed, positionSeconds: position }
+      : current)
+    setCourse((current) => current
+      ? {
+          ...current,
+          lessons: current.lessons.map((lesson) => lesson.id === lessonId
+            ? { ...lesson, progressStatus: status, completed, positionSeconds: position }
+            : lesson),
+        }
+      : current)
+  }
+
+  async function handleMarkCompleted() {
+    if (!courseId || !activeLesson) return
+    const currentSecond = Math.floor(mediaRef.current?.currentTime || activeLesson.positionSeconds || 0)
+    const progress = await updateLessonProgress(courseId, activeLesson.id, {
+      positionSeconds: currentSecond,
+      timeSpentSeconds: Math.max(activeLesson.timeSpentSeconds || 0, currentSecond),
+      completed: true,
+    })
+    applyProgress(progress.lessonId, progress.progressStatus, progress.completed, progress.positionSeconds)
+    await refreshCourse(activeLesson.id)
+  }
+
+  async function handleMediaTimeUpdate() {
+    if (!courseId || !activeLesson || !mediaRef.current || activeLesson.completed) return
+    const currentSecond = Math.floor(mediaRef.current.currentTime)
+    if (currentSecond < 1 || currentSecond - lastSavedSecondRef.current < 10) return
+
+    lastSavedSecondRef.current = currentSecond
+    const progress = await updateLessonProgress(courseId, activeLesson.id, {
+      positionSeconds: currentSecond,
+      timeSpentSeconds: Math.max(activeLesson.timeSpentSeconds || 0, currentSecond),
+    })
+    applyProgress(progress.lessonId, progress.progressStatus, progress.completed, progress.positionSeconds)
+  }
+
+  function handleLoadedMetadata() {
+    if (!mediaRef.current || !activeLesson || !activeLesson.positionSeconds) return
+    mediaRef.current.currentTime = activeLesson.positionSeconds
+  }
+
+  async function handleSubmitExercise() {
+    if (!courseId || !activeLesson) return
+    const result = await submitLessonExercise(courseId, activeLesson.id, answers)
+    setSubmitResult(result)
+    const history = await getExerciseAttempts(courseId, activeLesson.id)
+    setAttempts(history)
+    await refreshCourse(activeLesson.id)
+    setActiveTab('exercise')
+  }
+
+  function handleSelectLesson(lesson: LearningLessonDTO) {
     setActiveLesson(lesson)
-    setActiveStudyTab('lecture')
-    setExerciseSubmitted(false)
-    setExerciseResult(null)
-    setSelectedMCAnswer(null)
-    setFillBlankAnswer('')
-    setMatchedPairs({})
+    setActiveTab('content')
   }
-
-  const getContentTypeLabel = (type: number) => {
-    switch (type) {
-      case 0: return 'Video bài giảng'
-      case 1: return 'Tài liệu Audio'
-      case 2: return 'Lý thuyết'
-      case 3: return 'Tài liệu PDF'
-      default: return 'Bài giảng'
-    }
-  }
-
-  // Nộp bài tập
-  const handleSubmitExercise = (type: 'mc' | 'blank' | 'match') => {
-    setExerciseSubmitted(true)
-    let correct = false
-    if (type === 'mc') {
-      correct = selectedMCAnswer === 'B'
-    } else if (type === 'blank') {
-      correct = fillBlankAnswer.trim().toLowerCase() === 'in'
-    } else if (type === 'match') {
-      correct = Object.keys(matchedPairs).length === 3
-    }
-    setExerciseResult(correct)
-    if (correct && activeLesson) {
-      setCompletedLessons(prev => ({ ...prev, [activeLesson.id]: true }))
-    }
-  }
-
-  const handleWordSelect = (word: string) => {
-    setSelectedWord(word)
-    if (selectedDef) {
-      setMatchedPairs(prev => ({ ...prev, [word]: selectedDef }))
-      setSelectedWord(null)
-      setSelectedDef(null)
-    }
-  }
-
-  const handleDefSelect = (def: string) => {
-    setSelectedDef(def)
-    if (selectedWord) {
-      setMatchedPairs(prev => ({ ...prev, [selectedWord]: def }))
-      setSelectedWord(null)
-      setSelectedDef(null)
-    }
-  }
-
-  // Viết bình luận
-  const handleAddComment = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newCommentText.trim()) return
-    const newComment: CommentItem = {
-      id: comments.length + 1,
-      author: user.fullName,
-      content: newCommentText.trim(),
-      time: 'Vừa xong',
-      likes: 0
-    }
-    setComments([newComment, ...comments])
-    setNewCommentText('')
-  }
-
-  const backupVideos = [
-    'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260331_053923_22c0a6a5-313c-474c-85ff-3b50d25e944a.mp4',
-    'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260331_054411_511c1b7a-fb2f-42ef-bf6c-32c0b1a06e79.mp4',
-    'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260331_055427_ac7035b5-9f3b-4289-86fc-941b2432317d.mp4'
-  ]
-  const charCodeSum = activeLesson.id.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0)
-  const videoUrl = activeLesson.contentUrl && !activeLesson.contentUrl.includes('cdn.elearning.vn')
-    ? activeLesson.contentUrl
-    : backupVideos[charCodeSum % backupVideos.length]
 
   return (
     <div className="min-h-screen bg-offWhite1 text-brandDark">
-      {/* Navigation Header */}
       <nav className="w-full border-b border-grayBorder bg-white sticky top-0 z-50 shadow-sm">
-        <div className="max-w-[1440px] mx-auto px-6 h-18 flex items-center justify-between py-4">
+        <div className="max-w-[1440px] mx-auto px-6 h-[72px] flex items-center justify-between">
           <button
             onClick={() => navigate('/student')}
             className="flex items-center gap-2 text-secondaryText hover:text-actionBlue transition-colors font-semibold text-sm"
           >
             <ArrowLeft size={16} />
-            <span>Quay lại Dashboard</span>
+            <span>Quay lai Dashboard</span>
           </button>
 
-          <div className="text-center">
-            <p className="text-[10px] text-secondaryText uppercase tracking-wider font-bold">Phòng học ảo</p>
-            <h1 className="text-sm font-bold text-brandDark truncate max-w-[250px] sm:max-w-md">
-              {activeCourse.title}
-            </h1>
+          <div className="text-center min-w-0 px-4">
+            <p className="text-[10px] text-secondaryText uppercase tracking-wider font-bold">Phong hoc</p>
+            <h1 className="text-sm font-bold truncate max-w-[260px] sm:max-w-md">{course.title}</h1>
           </div>
 
           <div className="w-9 h-9 rounded-full bg-actionBlue/10 flex items-center justify-center text-actionBlue font-bold text-sm border border-actionBlue/10">
@@ -190,420 +221,439 @@ export default function StudyRoom({ user }: StudyRoomProps) {
         </div>
       </nav>
 
-      {/* Study Room Container */}
       <main className="max-w-[1440px] mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* CỘT TRÁI: PLAYER & TABS (8 cột) */}
-        <div className="lg:col-span-8 space-y-6">
-          
-          {/* Player Container */}
-          <div className="bg-white border border-grayBorder rounded-[24px] p-5 shadow-l1">
-            <div className="relative w-full aspect-video rounded-[16px] overflow-hidden bg-brandDark border border-grayBorder">
-              {activeLesson.contentType === 0 || activeLesson.contentType === 1 ? (
-                <video
-                  src={videoUrl}
-                  controls
-                  playsInline
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-offWhite1 p-8 overflow-y-auto flex flex-col justify-between">
-                  <div>
-                    <span className="px-3 py-1 bg-actionBlue/10 text-actionBlue rounded-[6px] border border-actionBlue/10 text-xs font-bold uppercase tracking-wider">
-                      {getContentTypeLabel(activeLesson.contentType)}
-                    </span>
-                    <h2 className="font-poppins text-brandDark text-xl font-bold mt-4 mb-4">
-                      {activeLesson.title}
-                    </h2>
-                    <div className="text-secondaryText text-sm leading-relaxed whitespace-pre-line">
-                      {activeLesson.textContent || 'Nội dung lý thuyết chưa cập nhật tài liệu chi tiết. Vui lòng tham khảo các bài tập đi kèm.'}
-                    </div>
-                  </div>
-                  <div className="mt-8 text-center text-xs text-secondaryText border-t border-grayBorder pt-4">
-                    Tài liệu được biên soạn bởi English.Learn Education
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-5 flex items-center justify-between">
+        <section className="lg:col-span-8 space-y-6">
+          <div className="bg-white border border-grayBorder rounded-[16px] p-5 shadow-l1">
+            <div className="flex items-center justify-between gap-4 mb-4">
               <div>
                 <span className="text-[10px] bg-actionBlue/5 border border-actionBlue/10 px-2 py-0.5 rounded text-actionBlue font-bold uppercase">
-                  Bài {activeLesson.orderIndex}
+                  Bai {activeLesson.orderIndex}
                 </span>
-                <h2 className="font-poppins text-brandDark text-lg font-bold mt-1">
-                  {activeLesson.title}
-                </h2>
+                <h2 className="font-poppins text-lg font-bold mt-1">{activeLesson.title}</h2>
+                <p className="text-xs text-secondaryText mt-1">
+                  Trang thai: {statusLabel(activeLesson.progressStatus)}
+                </p>
               </div>
-
-              <button 
-                onClick={() => setCompletedLessons(prev => ({ ...prev, [activeLesson.id]: true }))}
-                className={`px-4 py-2 rounded-[999px] font-semibold text-xs uppercase flex items-center gap-1.5 transition-all ${
-                  completedLessons[activeLesson.id]
+              <button
+                onClick={handleMarkCompleted}
+                className={`px-4 py-2 rounded-full font-bold text-xs uppercase flex items-center gap-1.5 transition-colors ${
+                  activeLesson.completed
                     ? 'bg-successGreenBg text-successGreenText border border-successGreenText/10'
                     : 'bg-actionBlue hover:bg-actionBlueHover text-white'
                 }`}
               >
                 <CheckCircle size={14} />
-                {completedLessons[activeLesson.id] ? 'Đã hoàn thành' : 'Đánh dấu hoàn thành'}
+                {activeLesson.completed ? 'Da xem' : 'Danh dau da xem'}
               </button>
             </div>
+
+            <LessonContent
+              lesson={activeLesson}
+              mediaRef={mediaRef}
+              onLoadedMetadata={handleLoadedMetadata}
+              onTimeUpdate={handleMediaTimeUpdate}
+              onEnded={handleMarkCompleted}
+            />
           </div>
 
-          {/* TAB SELECTOR */}
-          <div className="bg-white border border-grayBorder rounded-[24px] overflow-hidden shadow-l1">
+          <div className="bg-white border border-grayBorder rounded-[16px] overflow-hidden shadow-l1">
             <div className="flex border-b border-grayBorder">
-              <button
-                onClick={() => setActiveStudyTab('lecture')}
-                className={`flex-1 py-4 font-poppins text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-                  activeStudyTab === 'lecture'
-                    ? 'text-actionBlue border-actionBlue bg-offWhite3'
-                    : 'text-secondaryText border-transparent hover:text-brandDark'
-                }`}
-              >
-                Nội dung lý thuyết
-              </button>
-              <button
-                onClick={() => setActiveStudyTab('exercise')}
-                className={`flex-1 py-4 font-poppins text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-                  activeStudyTab === 'exercise'
-                    ? 'text-actionBlue border-actionBlue bg-offWhite3'
-                    : 'text-secondaryText border-transparent hover:text-brandDark'
-                }`}
-              >
-                Luyện tập (Quiz Room)
-              </button>
-              <button
-                onClick={() => setActiveStudyTab('qa')}
-                className={`flex-1 py-4 font-poppins text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-                  activeStudyTab === 'qa'
-                    ? 'text-actionBlue border-actionBlue bg-offWhite3'
-                    : 'text-secondaryText border-transparent hover:text-brandDark'
-                }`}
-              >
-                Hỏi đáp ({comments.length})
-              </button>
+              <TabButton active={activeTab === 'content'} icon={BookOpen} label="Noi dung" onClick={() => setActiveTab('content')} />
+              <TabButton active={activeTab === 'exercise'} icon={ClipboardList} label="Bai tap" onClick={() => setActiveTab('exercise')} />
+              <TabButton active={activeTab === 'history'} icon={History} label={`Lich su (${attempts.length})`} onClick={() => setActiveTab('history')} />
             </div>
 
-            {/* TAB CONTENT */}
             <div className="p-6">
-              {activeStudyTab === 'lecture' && (
+              {activeTab === 'content' && (
                 <div className="space-y-4">
-                  <h3 className="font-poppins text-brandDark text-base font-bold mb-2">Tóm tắt nội dung học tập</h3>
-                  <p className="text-secondaryText text-sm leading-relaxed">
-                    Bài học này tập trung nghiên cứu cấu trúc ngữ pháp thông dụng và phương pháp phát âm chuẩn xác. Hãy lắng nghe kỹ video hướng dẫn, sau đó làm các câu hỏi trắc nghiệm thực hành để củng cố kỹ năng.
+                  <h3 className="font-poppins font-bold">Tom tat bai hoc</h3>
+                  <p className="text-sm text-secondaryText leading-relaxed whitespace-pre-line">
+                    {activeLesson.textContent || 'Hay xem noi dung bai hoc va hoan thanh bai tap de tu danh gia kien thuc.'}
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                    <div className="bg-offWhite1 border border-grayBorder rounded-xl p-4 flex gap-3 items-start">
-                      <BookMarked className="text-actionBlue shrink-0 mt-0.5" size={18} />
-                      <div>
-                        <p className="text-xs font-bold text-brandDark">Trọng tâm kiến thức</p>
-                        <p className="text-xs text-secondaryText leading-relaxed mt-1">Từ vựng giao tiếp thực tiễn, phân tích ngữ cảnh và các cặp từ đồng nghĩa.</p>
-                      </div>
-                    </div>
-                    <div className="bg-offWhite1 border border-grayBorder rounded-xl p-4 flex gap-3 items-start">
-                      <Award className="text-actionBlue shrink-0 mt-0.5" size={18} />
-                      <div>
-                        <p className="text-xs font-bold text-brandDark">Mục tiêu đầu ra</p>
-                        <p className="text-xs text-secondaryText leading-relaxed mt-1">Vận dụng tốt vào giao tiếp hàng ngày, tăng tốc phản xạ từ vựng.</p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               )}
 
-              {activeStudyTab === 'exercise' && (
-                <div className="space-y-6">
-                  {/* Render quiz dynamic base on order index */}
-                  {activeLesson.orderIndex % 3 === 1 ? (
-                    /* Trắc nghiệm (Multiple Choice) */
-                    <div className="space-y-4">
-                      <div className="bg-offWhite1 border border-grayBorder rounded-xl p-4">
-                        <span className="text-[10px] bg-actionBlue/10 text-actionBlue font-bold uppercase px-2 py-0.5 rounded border border-actionBlue/10">TRẮC NGHIỆM</span>
-                        <p className="text-sm font-semibold text-brandDark mt-3 leading-relaxed">
-                          Chọn đáp án đúng nhất hoàn thành câu sau: <br />
-                          <strong>"She ______ English since she was a child."</strong>
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {[
-                          { key: 'A', text: 'studies' },
-                          { key: 'B', text: 'has studied' },
-                          { key: 'C', text: 'studied' },
-                          { key: 'D', text: 'is studying' }
-                        ].map((opt) => (
-                          <button
-                            key={opt.key}
-                            disabled={exerciseSubmitted}
-                            onClick={() => setSelectedMCAnswer(opt.key)}
-                            className={`p-4 rounded-xl border text-left font-medium text-xs transition-all flex items-center justify-between ${
-                              selectedMCAnswer === opt.key 
-                                ? 'border-actionBlue bg-actionBlue/5 text-actionBlue shadow-sm' 
-                                : 'border-grayBorder hover:bg-offWhite1 text-brandDark'
-                            }`}
-                          >
-                            <span>{opt.key}. {opt.text}</span>
-                          </button>
-                        ))}
-                      </div>
-
-                      {!exerciseSubmitted ? (
-                        <button
-                          onClick={() => handleSubmitExercise('mc')}
-                          disabled={!selectedMCAnswer}
-                          className="mt-4 px-6 py-2.5 bg-actionBlue hover:bg-actionBlueHover active:bg-actionBlueActive disabled:opacity-50 text-white rounded-[999px] font-semibold text-xs uppercase"
-                        >
-                          Nộp bài tập
-                        </button>
-                      ) : (
-                        <div className="mt-4 p-4 border rounded-xl flex items-start gap-3 bg-offWhite1">
-                          {exerciseResult ? (
-                            <CheckCircle className="text-successGreenText shrink-0 mt-0.5" size={18} />
-                          ) : (
-                            <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
-                          )}
-                          <div>
-                            <p className={`text-xs font-bold ${exerciseResult ? 'text-successGreenText' : 'text-red-500'}`}>
-                              {exerciseResult ? 'Chính xác! (+10 Điểm)' : 'Chưa chính xác!'}
-                            </p>
-                            <p className="text-[11px] text-secondaryText leading-relaxed mt-1">
-                              Câu trên dùng thì Hiện tại hoàn thành vì diễn tả một hành động bắt đầu từ quá khứ (since she was a child) kéo dài đến hiện tại. Đáp án là <strong>B. has studied</strong>.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : activeLesson.orderIndex % 3 === 2 ? (
-                    /* Điền vào chỗ trống (Fill in the blanks) */
-                    <div className="space-y-4">
-                      <div className="bg-offWhite1 border border-grayBorder rounded-xl p-4">
-                        <span className="text-[10px] bg-actionBlue/10 text-actionBlue font-bold uppercase px-2 py-0.5 rounded border border-actionBlue/10">ĐIỀN TỪ KHUYẾT</span>
-                        <p className="text-sm font-semibold text-brandDark mt-3 leading-relaxed">
-                          Điền một giới từ thích hợp hoàn thành câu: <br />
-                          <strong>"I am highly interested _____ learning American pronunciation."</strong>
-                        </p>
-                      </div>
-
-                      <div className="max-w-xs">
-                        <input
-                          type="text"
-                          disabled={exerciseSubmitted}
-                          value={fillBlankAnswer}
-                          onChange={(e) => setFillBlankAnswer(e.target.value)}
-                          placeholder="Nhập giới từ..."
-                          className="w-full bg-white border border-grayBorder rounded-lg py-3 px-4 text-brandDark font-mono text-sm placeholder:text-darkGrayBorder focus:outline-none focus:border-actionBlue focus:ring-4 focus:ring-actionBlue/10 transition-all uppercase"
-                        />
-                      </div>
-
-                      {!exerciseSubmitted ? (
-                        <button
-                          onClick={() => handleSubmitExercise('blank')}
-                          disabled={!fillBlankAnswer.trim()}
-                          className="px-6 py-2.5 bg-actionBlue hover:bg-actionBlueHover active:bg-actionBlueActive disabled:opacity-50 text-white rounded-[999px] font-semibold text-xs uppercase"
-                        >
-                          Nộp câu trả lời
-                        </button>
-                      ) : (
-                        <div className="p-4 border rounded-xl flex items-start gap-3 bg-offWhite1">
-                          {exerciseResult ? (
-                            <CheckCircle className="text-successGreenText shrink-0 mt-0.5" size={18} />
-                          ) : (
-                            <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
-                          )}
-                          <div>
-                            <p className={`text-xs font-bold ${exerciseResult ? 'text-successGreenText' : 'text-red-500'}`}>
-                              {exerciseResult ? 'Cực kỳ chính xác! (+10 Điểm)' : 'Chưa đúng rồi!'}
-                            </p>
-                            <p className="text-[11px] text-secondaryText leading-relaxed mt-1">
-                              Cấu trúc tính từ: <strong>be interested + in</strong> (quan tâm, hứng thú về việc gì đó). Đáp án đúng là <strong>in</strong>.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    /* Ghép cặp (Matching) */
-                    <div className="space-y-4">
-                      <div className="bg-offWhite1 border border-grayBorder rounded-xl p-4">
-                        <span className="text-[10px] bg-actionBlue/10 text-actionBlue font-bold uppercase px-2 py-0.5 rounded border border-actionBlue/10">GHÉP CẶP TỪ VỰNG</span>
-                        <p className="text-sm font-semibold text-brandDark mt-3 leading-relaxed">
-                          Hãy ghép nối từ vựng bên trái với định nghĩa tiếng Việt tương ứng bên phải.
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-6">
-                        {/* Từ vựng */}
-                        <div className="space-y-2">
-                          <p className="text-[10px] text-secondaryText uppercase tracking-wider font-bold">Từ tiếng Anh</p>
-                          {['Acquire', 'Fluency', 'Immersive'].map((word) => (
-                            <button
-                              key={word}
-                              disabled={exerciseSubmitted}
-                              onClick={() => handleWordSelect(word)}
-                              className={`w-full p-3 rounded-lg border text-left text-xs font-bold transition-all ${
-                                matchedPairs[word]
-                                  ? 'bg-successGreenBg/20 border-successGreenText/30 text-successGreenText'
-                                  : selectedWord === word
-                                  ? 'border-actionBlue bg-actionBlue/5 text-actionBlue'
-                                  : 'border-grayBorder hover:bg-offWhite1 text-brandDark'
-                              }`}
-                            >
-                              {word} {matchedPairs[word] && `➔ ${matchedPairs[word]}`}
-                            </button>
-                          ))}
-                        </div>
-
-                        {/* Định nghĩa */}
-                        <div className="space-y-2">
-                          <p className="text-[10px] text-secondaryText uppercase tracking-wider font-bold">Định nghĩa tiếng Việt</p>
-                          {['Môi trường đắm chìm', 'Tiếp thu, thu nhận', 'Trôi chảy, lưu loát'].map((def) => {
-                            const isMatched = Object.values(matchedPairs).includes(def)
-                            return (
-                              <button
-                                key={def}
-                                disabled={exerciseSubmitted || isMatched}
-                                onClick={() => handleDefSelect(def)}
-                                className={`w-full p-3 rounded-lg border text-left text-xs font-medium transition-all ${
-                                  isMatched
-                                    ? 'bg-successGreenBg/20 border-transparent text-successGreenText'
-                                    : selectedDef === def
-                                    ? 'border-actionBlue bg-actionBlue/5 text-actionBlue'
-                                    : 'border-grayBorder hover:bg-offWhite1 text-brandDark'
-                                }`}
-                              >
-                                {def}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-
-                      {!exerciseSubmitted ? (
-                        <button
-                          onClick={() => handleSubmitExercise('match')}
-                          disabled={Object.keys(matchedPairs).length < 3}
-                          className="mt-4 px-6 py-2.5 bg-actionBlue hover:bg-actionBlueHover active:bg-actionBlueActive disabled:opacity-50 text-white rounded-[999px] font-semibold text-xs uppercase"
-                        >
-                          Xác nhận kết quả
-                        </button>
-                      ) : (
-                        <div className="p-4 border rounded-xl flex items-start gap-3 bg-offWhite1">
-                          <CheckCircle className="text-successGreenText shrink-0 mt-0.5" size={18} />
-                          <div>
-                            <p className="text-xs font-bold text-successGreenText">Hoàn thành ghép từ! (+10 Điểm)</p>
-                            <p className="text-[11px] text-secondaryText leading-relaxed mt-1">
-                              Kết quả chính xác: <br />
-                              ➔ Acquire: Tiếp thu, thu nhận <br />
-                              ➔ Fluency: Trôi chảy, lưu loát <br />
-                              ➔ Immersive: Môi trường đắm chìm
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+              {activeTab === 'exercise' && (
+                <ExercisePanel
+                  loading={exerciseLoading}
+                  exercises={exercises}
+                  answers={answers}
+                  setAnswers={setAnswers}
+                  submitResult={submitResult}
+                  onSubmit={handleSubmitExercise}
+                />
               )}
 
-              {activeStudyTab === 'qa' && (
-                <div className="space-y-6">
-                  {/* Add Comment form */}
-                  <form onSubmit={handleAddComment} className="flex gap-3">
-                    <input
-                      type="text"
-                      value={newCommentText}
-                      onChange={(e) => setNewCommentText(e.target.value)}
-                      placeholder="Đặt câu hỏi thảo luận về bài học này..."
-                      className="flex-1 bg-white border border-grayBorder rounded-lg py-2.5 px-4 text-brandDark text-sm placeholder:text-darkGrayBorder focus:outline-none focus:border-actionBlue focus:ring-4 focus:ring-actionBlue/10 transition-all"
-                    />
-                    <button
-                      type="submit"
-                      disabled={!newCommentText.trim()}
-                      className="p-3 bg-actionBlue hover:bg-actionBlueHover active:bg-actionBlueActive text-white rounded-lg disabled:opacity-50 transition-colors flex items-center justify-center"
-                    >
-                      <Send size={16} />
-                    </button>
-                  </form>
-
-                  {/* Comments List */}
-                  <div className="space-y-4">
-                    {comments.map((comm) => (
-                      <div key={comm.id} className="p-4 border border-grayBorder rounded-xl flex gap-3.5 items-start">
-                        <div className="w-8 h-8 rounded-full bg-actionBlue/5 text-actionBlue border border-actionBlue/10 flex items-center justify-center font-bold text-xs uppercase shrink-0">
-                          {comm.author.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-xs font-bold text-brandDark">{comm.author}</span>
-                            <span className="text-[10px] text-secondaryText">{comm.time}</span>
-                          </div>
-                          <p className="text-xs text-brandDark mt-1 leading-relaxed">
-                            {comm.content}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              {activeTab === 'history' && (
+                <AttemptHistory attempts={attempts} />
               )}
             </div>
           </div>
+        </section>
 
-        </div>
+        <aside className="lg:col-span-4">
+          <div className="bg-white border border-grayBorder rounded-[16px] p-5 shadow-l1 sticky top-[96px]">
+            <div className="pb-4 border-b border-grayBorder mb-4">
+              <div className="flex items-center justify-between gap-4">
+                <h3 className="font-poppins font-bold">Lo trinh bai hoc</h3>
+                <span className="text-[11px] text-secondaryText font-semibold">
+                  {course.completedLessons}/{course.totalLessons} bai
+                </span>
+              </div>
+              <div className="mt-3">
+                <div className="flex justify-between text-[11px] text-secondaryText font-semibold mb-1.5">
+                  <span>Tien do khoa hoc</span>
+                  <span>{course.progressPercent}%</span>
+                </div>
+                <div className="w-full h-2 bg-offWhite2 rounded-full overflow-hidden border border-grayBorder">
+                  <div className="h-full bg-actionBlue rounded-full" style={{ width: `${course.progressPercent}%` }} />
+                </div>
+              </div>
+            </div>
 
-        {/* CỘT PHẢI: GIÁO TRÌNH LỘ TRÌNH (4 cột) */}
-        <div className="lg:col-span-4">
-          <div className="bg-white border border-grayBorder rounded-[24px] p-5 shadow-l1">
-            <h3 className="font-poppins text-brandDark text-base font-bold pb-4 border-b border-grayBorder mb-4 flex justify-between items-center">
-              <span>Danh mục bài học</span>
-              <span className="text-[11px] text-secondaryText font-medium bg-offWhite1 px-2.5 py-1 rounded-[6px] border border-grayBorder">
-                {activeCourse.lessons.length} bài học
-              </span>
-            </h3>
-
-            <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-              {[...activeCourse.lessons]
-                .sort((a, b) => a.orderIndex - b.orderIndex)
-                .map((lesson, idx) => {
-                  const isSelected = activeLesson.id === lesson.id
-                  const isDone = completedLessons[lesson.id]
-                  return (
-                    <button
-                      key={lesson.id}
-                      onClick={() => handleSelectLesson(lesson)}
-                      className={`w-full p-4 rounded-xl border text-left flex items-start gap-3 transition-all ${
-                        isSelected
-                          ? 'border-actionBlue bg-actionBlue/5 shadow-sm'
-                          : 'border-transparent hover:bg-offWhite1'
-                      }`}
-                    >
-                      <div className="mt-0.5 shrink-0">
-                        {isDone ? (
-                          <CheckCircle size={16} className="text-successGreenText" />
-                        ) : (
-                          <div className="w-4 h-4 rounded-full border-2 border-darkGrayBorder flex items-center justify-center">
-                            <div className="w-1.5 h-1.5 rounded-full bg-transparent" />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-xs font-bold truncate leading-tight ${isSelected ? 'text-actionBlue' : 'text-brandDark'}`}>
-                          Bài {lesson.orderIndex}: {lesson.title}
-                        </p>
-                        <p className="text-[10px] text-secondaryText mt-1">
-                          {getContentTypeLabel(lesson.contentType)}
-                        </p>
-                      </div>
-                    </button>
-                  )
-                })}
+            <div className="space-y-2 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
+              {orderedLessons.map((lesson) => {
+                const selected = activeLesson.id === lesson.id
+                return (
+                  <button
+                    key={lesson.id}
+                    onClick={() => handleSelectLesson(lesson)}
+                    className={`w-full p-4 rounded-xl border text-left flex gap-3 transition-colors ${
+                      selected
+                        ? 'border-actionBlue bg-actionBlue/5'
+                        : 'border-transparent hover:bg-offWhite1'
+                    }`}
+                  >
+                    <StatusIcon status={lesson.progressStatus} />
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-xs font-bold truncate ${selected ? 'text-actionBlue' : 'text-brandDark'}`}>
+                        Bai {lesson.orderIndex}: {lesson.title}
+                      </p>
+                      <p className="text-[10px] text-secondaryText mt-1">{statusLabel(lesson.progressStatus)}</p>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           </div>
-        </div>
-
+        </aside>
       </main>
     </div>
   )
+}
+
+function LessonContent({
+  lesson,
+  mediaRef,
+  onLoadedMetadata,
+  onTimeUpdate,
+  onEnded,
+}: {
+  lesson: LearningLessonDTO
+  mediaRef: MutableRefObject<HTMLVideoElement | HTMLAudioElement | null>
+  onLoadedMetadata: () => void
+  onTimeUpdate: () => void
+  onEnded: () => void
+}) {
+  const hasMedia = !!lesson.contentUrl && !lesson.contentUrl.includes('cdn.elearning.vn')
+
+  if (lesson.contentType === 0 && hasMedia) {
+    return (
+      <div className="relative w-full aspect-video rounded-[12px] overflow-hidden bg-brandDark border border-grayBorder">
+        <video
+          key={lesson.id}
+          ref={(node) => { mediaRef.current = node }}
+          src={lesson.contentUrl || undefined}
+          controls
+          playsInline
+          onLoadedMetadata={onLoadedMetadata}
+          onTimeUpdate={onTimeUpdate}
+          onEnded={onEnded}
+          className="w-full h-full object-cover"
+        />
+      </div>
+    )
+  }
+
+  if (lesson.contentType === 1 && hasMedia) {
+    return (
+      <div className="rounded-[12px] border border-grayBorder bg-offWhite1 p-6">
+        <audio
+          key={lesson.id}
+          ref={(node) => { mediaRef.current = node }}
+          src={lesson.contentUrl || undefined}
+          controls
+          onLoadedMetadata={onLoadedMetadata}
+          onTimeUpdate={onTimeUpdate}
+          onEnded={onEnded}
+          className="w-full"
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-[260px] rounded-[12px] border border-grayBorder bg-offWhite1 p-6">
+      <div className="flex items-center gap-2 text-actionBlue text-xs font-bold uppercase mb-4">
+        <FileText size={15} />
+        Tai lieu van ban
+      </div>
+      <p className="text-sm text-secondaryText leading-relaxed whitespace-pre-line">
+        {lesson.textContent || 'Noi dung bai hoc dang duoc cap nhat.'}
+      </p>
+    </div>
+  )
+}
+
+function ExercisePanel({
+  loading,
+  exercises,
+  answers,
+  setAnswers,
+  submitResult,
+  onSubmit,
+}: {
+  loading: boolean
+  exercises: ExerciseQuestionDTO[]
+  answers: Record<string, unknown>
+  setAnswers: Dispatch<SetStateAction<Record<string, unknown>>>
+  submitResult: ExerciseSubmitResponse | null
+  onSubmit: () => void
+}) {
+  if (loading) {
+    return (
+      <div className="py-10 flex justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-actionBlue" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {exercises.map((question, index) => (
+        <div key={question.id} className="border border-grayBorder rounded-[12px] p-4">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[10px] bg-actionBlue/5 text-actionBlue border border-actionBlue/10 px-2 py-0.5 rounded font-bold uppercase">
+              Cau {index + 1} - {questionTypeLabel(question.type)}
+            </span>
+            {submitResult?.results.find((result) => result.questionId === question.id)?.correct === true && (
+              <CheckCircle size={16} className="text-successGreenText" />
+            )}
+          </div>
+          <p className="text-sm font-semibold mt-3 leading-relaxed">{question.prompt}</p>
+          <QuestionInput question={question} answers={answers} setAnswers={setAnswers} disabled={!!submitResult} />
+
+          {submitResult && (
+            <QuestionResult result={submitResult.results.find((item) => item.questionId === question.id)} />
+          )}
+        </div>
+      ))}
+
+      {submitResult ? (
+        <div className="rounded-[12px] border border-grayBorder bg-offWhite1 p-4 flex items-start gap-3">
+          <CheckCircle className="text-successGreenText shrink-0 mt-0.5" size={19} />
+          <div>
+            <p className="font-bold text-sm">Diem so: {submitResult.score}/100</p>
+            <p className="text-xs text-secondaryText mt-1">
+              Dung {submitResult.correctAnswers}/{submitResult.totalQuestions} cau. Ket qua da duoc luu vao lich su lam bai.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={onSubmit}
+          disabled={Object.keys(answers).length === 0}
+          className="px-5 py-3 rounded-full bg-actionBlue hover:bg-actionBlueHover disabled:opacity-50 text-white font-bold text-sm flex items-center gap-2"
+        >
+          <Send size={15} />
+          Nop bai
+        </button>
+      )}
+    </div>
+  )
+}
+
+function QuestionInput({
+  question,
+  answers,
+  setAnswers,
+  disabled,
+}: {
+  question: ExerciseQuestionDTO
+  answers: Record<string, unknown>
+  setAnswers: Dispatch<SetStateAction<Record<string, unknown>>>
+  disabled: boolean
+}) {
+  if (question.type === 'MULTIPLE_CHOICE') {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+        {(question.options || []).map((option) => (
+          <button
+            key={option}
+            disabled={disabled}
+            onClick={() => setAnswers((current) => ({ ...current, [question.id]: option.split('.')[0].trim() }))}
+            className={`p-3 rounded-[10px] border text-left text-xs font-semibold transition-colors ${
+              answers[question.id] === option.split('.')[0].trim()
+                ? 'border-actionBlue bg-actionBlue/5 text-actionBlue'
+                : 'border-grayBorder hover:bg-offWhite1'
+            }`}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  if (question.type === 'FILL_BLANK') {
+    return (
+      <input
+        disabled={disabled}
+        value={(answers[question.id] as string) || ''}
+        onChange={(event) => setAnswers((current) => ({ ...current, [question.id]: event.target.value }))}
+        placeholder="Nhap cau tra loi..."
+        className="mt-4 w-full sm:max-w-sm bg-white border border-grayBorder rounded-[10px] py-3 px-4 text-sm focus:outline-none focus:border-actionBlue focus:ring-4 focus:ring-actionBlue/10"
+      />
+    )
+  }
+
+  const current = (answers[question.id] as Record<string, string> | undefined) || {}
+  return (
+    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {(question.leftItems || []).map((left) => (
+        <label key={left} className="text-xs font-semibold text-brandDark">
+          <span>{left}</span>
+          <select
+            disabled={disabled}
+            value={current[left] || ''}
+            onChange={(event) => {
+              const next = { ...current, [left]: event.target.value }
+              setAnswers((allAnswers) => ({ ...allAnswers, [question.id]: next }))
+            }}
+            className="mt-1 w-full bg-white border border-grayBorder rounded-[10px] py-2.5 px-3 text-xs focus:outline-none focus:border-actionBlue"
+          >
+            <option value="">Chon nghia</option>
+            {(question.rightItems || []).map((right) => (
+              <option key={right} value={right}>{right}</option>
+            ))}
+          </select>
+        </label>
+      ))}
+    </div>
+  )
+}
+
+function QuestionResult({ result }: { result?: ExerciseSubmitResponse['results'][number] }) {
+  if (!result) return null
+
+  return (
+    <div className={`mt-4 rounded-[10px] border p-3 text-xs ${result.correct ? 'bg-successGreenBg/40 border-successGreenText/20' : 'bg-red-50 border-red-100'}`}>
+      <p className={`font-bold ${result.correct ? 'text-successGreenText' : 'text-red-600'}`}>
+        {result.correct ? 'Dung' : 'Chua dung'}
+      </p>
+      <p className="text-secondaryText mt-1">Dap an dung: {formatAnswer(result.correctAnswer)}</p>
+      <p className="text-secondaryText mt-1">{result.explanation}</p>
+    </div>
+  )
+}
+
+function AttemptHistory({ attempts }: { attempts: ExerciseAttemptDTO[] }) {
+  if (attempts.length === 0) {
+    return <p className="text-sm text-secondaryText">Chua co lan lam bai nao duoc luu.</p>
+  }
+
+  return (
+    <div className="space-y-4">
+      {attempts.map((attempt) => (
+        <div key={attempt.id} className="border border-grayBorder rounded-[12px] p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="font-bold text-sm">Diem: {attempt.score}/100</p>
+            <p className="text-xs text-secondaryText">{formatDateTime(attempt.attemptedAt)}</p>
+          </div>
+          <p className="text-xs text-secondaryText mt-1">
+            Dung {attempt.correctAnswers}/{attempt.totalQuestions} cau
+          </p>
+          <div className="mt-3 space-y-2">
+            {attempt.results.map((result) => (
+              <div key={result.questionId} className="text-xs bg-offWhite1 border border-grayBorder rounded-[10px] p-3">
+                <p className="font-semibold">{result.prompt}</p>
+                <p className={result.correct ? 'text-successGreenText mt-1' : 'text-red-600 mt-1'}>
+                  {result.correct ? 'Dung' : 'Sai'} - Dap an dung: {formatAnswer(result.correctAnswer)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function TabButton({
+  active,
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  active: boolean
+  icon: ElementType
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex-1 min-h-[52px] px-3 flex items-center justify-center gap-2 text-xs font-bold uppercase border-b-2 transition-colors ${
+        active ? 'text-actionBlue border-actionBlue bg-offWhite3' : 'text-secondaryText border-transparent hover:text-brandDark'
+      }`}
+    >
+      <Icon size={15} />
+      {label}
+    </button>
+  )
+}
+
+function StatusIcon({ status }: { status: LearningLessonDTO['progressStatus'] }) {
+  if (status === 'COMPLETED') return <CheckCircle size={16} className="text-successGreenText shrink-0 mt-0.5" />
+  if (status === 'IN_PROGRESS') return <Play size={16} className="text-actionBlue shrink-0 mt-0.5" />
+  return <Circle size={16} className="text-darkGrayBorder shrink-0 mt-0.5" />
+}
+
+function pickInitialLesson(lessons: LearningLessonDTO[]) {
+  const sorted = [...lessons].sort((a, b) => a.orderIndex - b.orderIndex)
+  return sorted.find((lesson) => lesson.progressStatus === 'IN_PROGRESS')
+    || sorted.find((lesson) => lesson.progressStatus === 'NOT_STARTED')
+    || sorted[0]
+    || null
+}
+
+function statusLabel(status: LearningLessonDTO['progressStatus']) {
+  if (status === 'COMPLETED') return 'Da xem'
+  if (status === 'IN_PROGRESS') return 'Dang hoc'
+  return 'Chua xem'
+}
+
+function questionTypeLabel(type: ExerciseQuestionDTO['type']) {
+  if (type === 'MULTIPLE_CHOICE') return 'Trac nghiem'
+  if (type === 'FILL_BLANK') return 'Dien tu'
+  return 'Ghep cap'
+}
+
+function formatAnswer(value: unknown): string {
+  if (value && typeof value === 'object') {
+    return Object.entries(value as Record<string, string>)
+      .map(([key, val]) => `${key}: ${val}`)
+      .join('; ')
+  }
+  return String(value ?? '')
+}
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value))
 }

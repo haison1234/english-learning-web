@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Coupons")
+@Table(name = "coupons")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -14,20 +14,22 @@ import java.time.LocalDateTime;
 @Builder
 public class Coupon {
     @Id
-    @Column(length = 50, nullable = false)
+    @Column(name = "code", length = 50, nullable = false)
     private String code;
 
-    @Column(precision = 12, scale = 0)
+    @Column(name = "discount_value", precision = 12, scale = 0)
     private BigDecimal discountValue;
 
-    @Column(columnDefinition = "BIT DEFAULT 1")
+    @Column(name = "is_percent", columnDefinition = "BIT DEFAULT 1")
     private Boolean isPercent;
 
+    @Column(name = "max_uses")
     private Integer maxUses;
 
-    @Column(columnDefinition = "INT DEFAULT 0")
+    @Column(name = "used_count", columnDefinition = "INT DEFAULT 0")
     private Integer usedCount;
 
+    @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
     @PrePersist
