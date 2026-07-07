@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ElementType } from 'react'
-import { BarChart3, BookOpen, CheckCircle, ChevronRight, Clock, LogOut, Play, User } from 'lucide-react'
+import { BarChart3, Bell, Check, BookOpen, CheckCircle, ChevronRight, Clock, LogOut, Play, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { UserProfile } from '../../services/authService'
 import { getMyLearningCourses, MyCourseLearningDTO } from '../../services/learningService'
+import { getStudentNotifications, markNotificationAsRead, markAllNotificationsAsRead, StudentNotificationDTO } from '../../services/studentService'
 
 interface StudentDashboardProps {
   user: UserProfile | null
@@ -15,6 +16,67 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
   const [myCourses, setMyCourses] = useState<MyCourseLearningDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Notifications State
+  const [notifications, setNotifications] = useState<StudentNotificationDTO[]>([])
+  const [isNotifOpen, setIsNotifOpen] = useState(false)
+  const [expandedNotifId, setExpandedNotifId] = useState<string | null>(null)
+
+  const unreadCount = useMemo(() => {
+    return notifications.filter(n => !n.isRead).length
+  }, [notifications])
+
+  const loadNotifications = async () => {
+    try {
+      const data = await getStudentNotifications()
+      setNotifications(data)
+    } catch (err) {
+      console.error('Lỗi tải thông báo:', err)
+    }
+  }
+
+  useEffect(() => {
+    loadNotifications()
+    // Poll every 30 seconds
+    const interval = setInterval(loadNotifications, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const handleNotifClick = async (notif: StudentNotificationDTO) => {
+    if (expandedNotifId === notif.id) {
+      setExpandedNotifId(null)
+    } else {
+      setExpandedNotifId(notif.id)
+    }
+
+    if (!notif.isRead) {
+      try {
+        await markNotificationAsRead(notif.id)
+        setNotifications(prev =>
+          prev.map(n => (n.id === notif.id ? { ...n, isRead: true } : n))
+        )
+      } catch (err) {
+        console.error(err)
+      }
+    }
+  }
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllNotificationsAsRead()
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  useEffect(() => {
+    // Close notifications dropdown on click outside
+    if (!isNotifOpen) return
+    const handleOutsideClick = () => setIsNotifOpen(false)
+    window.addEventListener('click', handleOutsideClick)
+    return () => window.removeEventListener('click', handleOutsideClick)
+  }, [isNotifOpen])
 
   useEffect(() => {
     async function loadData() {
@@ -70,6 +132,84 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
           </button>
 
           <div className="flex items-center gap-3">
+            {/* Notification Bell */}
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                className="w-10 h-10 rounded-full border border-grayBorder bg-white hover:bg-offWhite2 transition-colors flex items-center justify-center relative"
+                title="Thông báo"
+              >
+                <Bell size={18} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {isNotifOpen && (
+                <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white border border-grayBorder rounded-2xl shadow-xl z-50 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-grayBorder bg-offWhite1 flex items-center justify-between">
+                    <span className="font-poppins font-bold text-sm">Thông báo ({notifications.length})</span>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllRead}
+                        className="text-xs text-actionBlue hover:text-actionBlueHover font-semibold flex items-center gap-1"
+                      >
+                        <Check size={14} />
+                        Đọc tất cả
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-[360px] overflow-y-auto divide-y divide-grayBorder">
+                    {notifications.length === 0 ? (
+                      <div className="py-8 text-center text-sm text-secondaryText">
+                        Bạn chưa có thông báo nào.
+                      </div>
+                    ) : (
+                      notifications.map((notif) => {
+                        const isExpanded = expandedNotifId === notif.id;
+                        return (
+                          <div
+                            key={notif.id}
+                            onClick={() => handleNotifClick(notif)}
+                            className={`p-4 hover:bg-offWhite1 cursor-pointer transition-colors ${
+                              !notif.isRead ? 'bg-actionBlue/5' : ''
+                            }`}
+                          >
+                            <div className="flex gap-2.5 items-start">
+                              {!notif.isRead && (
+                                <span className="w-2 h-2 rounded-full bg-actionBlue shrink-0 mt-1.5" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-poppins font-bold text-sm text-brandDark truncate">
+                                  {notif.title}
+                                </p>
+                                <p className={`text-xs text-secondaryText mt-1 ${isExpanded ? 'whitespace-pre-line' : 'line-clamp-2'}`}>
+                                  {notif.message}
+                                </p>
+                                <p className="text-[10px] text-secondaryText/70 mt-2 font-medium">
+                                  {new Date(notif.createdAt).toLocaleString('vi-VN', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric'
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-full border border-grayBorder bg-offWhite1">
               <div className="w-7 h-7 rounded-full bg-actionBlue/10 text-actionBlue flex items-center justify-center font-bold text-xs">
                 {user.fullName.charAt(0).toUpperCase()}
