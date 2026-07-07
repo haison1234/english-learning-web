@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "exercise_attempts")
+@Table(name = "ExerciseAttempts")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,33 +16,33 @@ import java.util.UUID;
 public class ExerciseAttempt {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id")
+    @Column(name = "Id")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "enrollment_id", nullable = false)
+    @JoinColumn(name = "EnrollmentId", nullable = false)
     private Enrollment enrollment;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lesson_id", nullable = false)
+    @JoinColumn(name = "LessonId", nullable = false)
     private Lesson lesson;
 
-    @Column(name = "score", nullable = false)
+    @Column(name = "Score", nullable = false)
     private Integer score;
 
-    @Column(name = "total_questions", nullable = false)
+    @Column(name = "TotalQuestions", nullable = false)
     private Integer totalQuestions;
 
-    @Column(name = "correct_answers", nullable = false)
+    @Column(name = "CorrectAnswers", nullable = false)
     private Integer correctAnswers;
 
-    @Column(name = "submitted_answers", columnDefinition = "NVARCHAR(MAX)", nullable = false)
+    @Column(name = "SubmittedAnswers", columnDefinition = "NVARCHAR(MAX)", nullable = false)
     private String submittedAnswers;
 
-    @Column(name = "result_data", columnDefinition = "NVARCHAR(MAX)", nullable = false)
+    @Column(name = "ResultData", columnDefinition = "NVARCHAR(MAX)", nullable = false)
     private String resultData;
 
-    @Column(name = "attempted_at", updatable = false)
+    @Column(name = "AttemptedAt", updatable = false)
     private LocalDateTime attemptedAt;
 
     @PrePersist

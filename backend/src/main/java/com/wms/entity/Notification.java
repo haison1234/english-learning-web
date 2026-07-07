@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "notifications")
+@Table(name = "Notifications")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,23 +15,23 @@ import java.util.UUID;
 public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id")
+    @Column(name = "Id")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "UserId", nullable = false)
     private User user;
 
-    @Column(name = "title", length = 200, nullable = false)
+    @Column(name = "Title", length = 200, nullable = false)
     private String title;
 
-    @Column(name = "message", columnDefinition = "NVARCHAR(MAX)", nullable = false)
+    @Column(name = "Message", columnDefinition = "NVARCHAR(MAX)", nullable = false)
     private String message;
 
-    @Column(name = "is_read", columnDefinition = "BIT DEFAULT 0")
+    @Column(name = "IsRead", columnDefinition = "BIT DEFAULT 0")
     private Boolean isRead;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "CreatedAt", updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist

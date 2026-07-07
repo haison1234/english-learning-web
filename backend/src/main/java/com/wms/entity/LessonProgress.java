@@ -8,10 +8,10 @@ import java.util.UUID;
 
 @Entity
 @Table(
-        name = "lesson_progress",
+        name = "LessonProgresses",
         uniqueConstraints = @UniqueConstraint(
                 name = "uq_lesson_progress_enrollment_lesson",
-                columnNames = {"enrollment_id", "lesson_id"}
+                columnNames = {"EnrollmentId", "LessonId"}
         )
 )
 @Getter
@@ -22,30 +22,30 @@ import java.util.UUID;
 public class LessonProgress {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id")
+    @Column(name = "Id")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "enrollment_id", nullable = false)
+    @JoinColumn(name = "EnrollmentId", nullable = false)
     private Enrollment enrollment;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lesson_id", nullable = false)
+    @JoinColumn(name = "LessonId", nullable = false)
     private Lesson lesson;
 
-    @Column(name = "position_seconds", columnDefinition = "INT DEFAULT 0", nullable = false)
+    @Column(name = "PositionSeconds", columnDefinition = "INT DEFAULT 0", nullable = false)
     private Integer positionSeconds;
 
-    @Column(name = "time_spent_seconds", columnDefinition = "INT DEFAULT 0", nullable = false)
+    @Column(name = "TimeSpentSeconds", columnDefinition = "INT DEFAULT 0", nullable = false)
     private Integer timeSpentSeconds;
 
-    @Column(name = "completed", columnDefinition = "BIT DEFAULT 0", nullable = false)
+    @Column(name = "Completed", columnDefinition = "BIT DEFAULT 0", nullable = false)
     private Boolean completed;
 
-    @Column(name = "last_updated_at", nullable = false)
+    @Column(name = "LastUpdatedAt", nullable = false)
     private LocalDateTime lastUpdatedAt;
 
-    @Column(name = "completed_at")
+    @Column(name = "CompletedAt")
     private LocalDateTime completedAt;
 
     @PrePersist

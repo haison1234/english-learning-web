@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "comments")
+@Table(name = "Comments")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,25 +15,25 @@ import java.util.UUID;
 public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id")
+    @Column(name = "Id")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lesson_id", nullable = false)
+    @JoinColumn(name = "LessonId", nullable = false)
     private Lesson lesson;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "UserId", nullable = false)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_id")
+    @JoinColumn(name = "ParentId")
     private Comment parent;
 
-    @Column(name = "content", columnDefinition = "NVARCHAR(MAX)", nullable = false)
+    @Column(name = "Content", columnDefinition = "NVARCHAR(MAX)", nullable = false)
     private String content;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "CreatedAt", updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist

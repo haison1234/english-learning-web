@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "enrollments")
+@Table(name = "Enrollments")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,34 +16,34 @@ import java.util.UUID;
 public class Enrollment {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id")
+    @Column(name = "Id")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "UserId", nullable = false)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", nullable = false)
+    @JoinColumn(name = "CourseId", nullable = false)
     private Course course;
 
-    @Column(name = "payment_status", columnDefinition = "TINYINT")
+    @Column(name = "PaymentStatus", columnDefinition = "TINYINT")
     private com.wms.enums.PaymentStatus paymentStatus; // 0: Pending, 1: Success
 
-    @Column(name = "amount", precision = 12, scale = 0)
+    @Column(name = "Amount", precision = 12, scale = 0)
     private BigDecimal amount;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "coupon_code")
+    @JoinColumn(name = "CouponCode")
     private Coupon coupon;
 
-    @Column(name = "progress_data", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "ProgressData", columnDefinition = "NVARCHAR(MAX)")
     private String progressData; // JSON
 
-    @Column(name = "certificate_code", length = 100)
+    @Column(name = "CertificateCode", length = 100)
     private String certificateCode;
 
-    @Column(name = "enrolled_at", updatable = false)
+    @Column(name = "EnrolledAt", updatable = false)
     private LocalDateTime enrolledAt;
 
     @PrePersist

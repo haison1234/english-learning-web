@@ -17,28 +17,28 @@ import java.util.UUID;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id")
+    @Column(name = "Id")
     private UUID id;
 
-    @Column(name = "full_name", nullable = false, length = 150)
+    @Column(name = "FullName", nullable = false, length = 150)
     private String fullName;
 
-    @Column(name = "email", nullable = false, unique = true, length = 255)
+    @Column(name = "Email", nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "password_hash", length = 512)
+    @Column(name = "PasswordHash", length = 512)
     private String passwordHash;
 
-    @Column(name = "role", columnDefinition = "TINYINT")
+    @Column(name = "Role", columnDefinition = "TINYINT")
     private com.wms.enums.UserRole role; // 0: Admin, 1: Student
 
-    @Column(name = "verify_token", length = 512)
+    @Column(name = "VerifyToken", length = 512)
     private String verifyToken;
 
-    @Column(name = "metadata", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "Metadata", columnDefinition = "NVARCHAR(MAX)")
     private String metadata; // JSON: AvatarUrl, NotificationSettings, GoogleId
 
-    @Column(columnDefinition = "TINYINT")
+    @Column(name = "Status", columnDefinition = "TINYINT")
     private UserStatus status;
 
     @Column(name = "CreatedAt", updatable = false)
