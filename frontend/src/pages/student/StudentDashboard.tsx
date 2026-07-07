@@ -1,11 +1,9 @@
-import { useState, useEffect } from 'react'
-import { 
-  LogOut, Clock, CheckCircle, Play, ChevronRight, Sparkles, BookMarked, ChevronDown, Bell
-} from 'lucide-react'
-import { UserProfile } from '../../services/authService'
-import { getCourses, CourseDTO } from '../../services/courseService'
-import { getMyPayments } from '../../services/paymentService'
+import { useEffect, useMemo, useState } from 'react'
+import type { ElementType } from 'react'
+import { BarChart3, BookOpen, CheckCircle, ChevronRight, Clock, LogOut, Play, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { UserProfile } from '../../services/authService'
+import { getMyLearningCourses, MyCourseLearningDTO } from '../../services/learningService'
 
 interface StudentDashboardProps {
   user: UserProfile | null
@@ -14,360 +12,245 @@ interface StudentDashboardProps {
 
 export default function StudentDashboard({ user, onLogout }: StudentDashboardProps) {
   const navigate = useNavigate()
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
-  const [myCourses, setMyCourses] = useState<(CourseDTO & { completed: number; total: number })[]>([])
+  const [myCourses, setMyCourses] = useState<MyCourseLearningDTO[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [coursesData, paymentsData] = await Promise.all([
-          getCourses(),
-          getMyPayments()
-        ])
-        
-        const publishedCourses = coursesData.filter(c => c.status === 1)
-        
-        // Find courses that have a SUCCESS payment
-        const purchasedCourseIds = new Set(
-          paymentsData.filter(p => p.status === 1 || (p.status as unknown as string) === 'SUCCESS').map(p => p.courseId)
-        )
-        
-        const enrolled = publishedCourses
-          .filter(c => purchasedCourseIds.has(c.id))
-          .map(c => ({
-            ...c,
-            completed: 0, // Mock progress since no progress API yet
-            total: 5      // Mock total lessons
-          }))
-          
-        setMyCourses(enrolled)
+        setLoading(true)
+        setError(null)
+        const courses = await getMyLearningCourses()
+        setMyCourses(courses)
       } catch (err) {
-        console.error('Lỗi tải dữ liệu dashboard:', err)
+        setError(err instanceof Error ? err.message : 'Khong the tai tien do hoc tap.')
       } finally {
         setLoading(false)
       }
     }
+
     loadData()
   }, [])
 
-  if (!user) return null;
+  const summary = useMemo(() => {
+    const totalCourses = myCourses.length
+    const totalLessons = myCourses.reduce((sum, course) => sum + course.totalLessons, 0)
+    const completedLessons = myCourses.reduce((sum, course) => sum + course.completedLessons, 0)
+    const totalSeconds = myCourses.reduce((sum, course) => sum + course.totalTimeSpentSeconds, 0)
+    const averageProgress = totalCourses === 0
+      ? 0
+      : Math.round(myCourses.reduce((sum, course) => sum + course.progressPercent, 0) / totalCourses)
 
-  // Mock stats
-  const stats = [
-    { label: 'Study Time', value: '120 mins', icon: Clock, color: '#0060FD' },
-    { label: 'Completed', value: '5 lessons', icon: CheckCircle, color: '#2E7D32' }
-  ]
+    return {
+      totalCourses,
+      totalLessons,
+      completedLessons,
+      totalSeconds,
+      averageProgress,
+    }
+  }, [myCourses])
 
-
-
-
-
-  const notifications = [
-    { id: 1, text: 'Có bài tập mới trong khóa học IELTS Giao tiếp!', time: '1 giờ trước', read: false },
-    { id: 2, text: 'Nhắc nhở: Bạn chưa học bài ngày hôm nay.', time: '3 giờ trước', read: false },
-    { id: 3, text: 'Chúc mừng bạn đã hoàn thành bài thi trắc nghiệm.', time: '1 ngày trước', read: true }
-  ]
-
-  const getLevelLabel = (lvl: number) => {
-    if (lvl === 0) return 'Beginner'
-    if (lvl === 1) return 'Intermediate'
-    return 'Advanced'
-  }
+  if (!user) return null
 
   const handleStartStudy = (courseId: string) => {
     navigate(`/student/study/${courseId}`)
   }
 
   return (
-    <div className="min-h-screen bg-offWhite1 text-brandDark pb-20">
-      
-      {/* ── HEADER ── */}
-      <nav className="w-full border-b border-grayBorder/50 bg-white/85 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+    <div className="min-h-screen bg-offWhite1 text-brandDark pb-16">
+      <nav className="w-full border-b border-grayBorder bg-white sticky top-0 z-50 shadow-sm">
         <div className="max-w-[1440px] mx-auto px-6 h-[72px] flex items-center justify-between">
-          
-          <button 
+          <button
             onClick={() => navigate('/')}
-            className="font-poppins text-brandDark text-xl font-bold tracking-tight hover:opacity-80 transition-all flex items-center gap-1.5"
+            className="font-poppins text-xl font-bold tracking-tight flex items-center gap-1.5 hover:opacity-80"
           >
             <span className="text-actionBlue">English.</span>
-            <span className="text-brandDark">Learn</span>
+            <span>Learn</span>
           </button>
 
-          <div className="hidden md:flex items-center gap-8">
-            <button className="text-actionBlue font-semibold text-[15px] relative py-1 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-actionBlue">Dashboard</button>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* Notifications */}
-            <div className="relative">
-              <button 
-                onClick={() => {
-                  setNotificationsOpen(!notificationsOpen)
-                  setProfileDropdownOpen(false)
-                }}
-                className="w-10 h-10 rounded-full bg-offWhite1 hover:bg-offWhite3 border border-grayBorder flex items-center justify-center relative transition-all"
-              >
-                <Bell size={18} className="text-secondaryText" />
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 border border-white"></span>
-              </button>
-
-              {notificationsOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setNotificationsOpen(false)} />
-                  <div className="absolute right-0 mt-2 w-72 rounded-[16px] bg-white border border-grayBorder p-4 shadow-l3 z-20 animate-in fade-in slide-in-from-top-2 duration-150">
-                    <h4 className="font-poppins text-brandDark text-sm font-bold mb-3">Thông báo</h4>
-                    <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                      {notifications.map(n => (
-                        <div key={n.id} className="flex flex-col gap-1">
-                          <p className={`text-xs ${n.read ? 'text-secondaryText' : 'text-brandDark font-semibold'}`}>{n.text}</p>
-                          <span className="text-[10px] text-secondaryText">{n.time}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-full border border-grayBorder bg-offWhite1">
+              <div className="w-7 h-7 rounded-full bg-actionBlue/10 text-actionBlue flex items-center justify-center font-bold text-xs">
+                {user.fullName.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-sm font-semibold max-w-[180px] truncate">{user.fullName}</span>
             </div>
-
-            {/* Profile */}
-            <div className="relative">
-              <button 
-                onClick={() => {
-                  setProfileDropdownOpen(!profileDropdownOpen)
-                  setNotificationsOpen(false)
-                }}
-                className="flex items-center gap-2.5 px-4 py-2 rounded-[999px] bg-white border border-grayBorder hover:bg-offWhite1 transition-all active:scale-95"
-              >
-                <div className="w-6 h-6 rounded-full bg-actionBlue/10 flex items-center justify-center text-actionBlue font-semibold text-xs border border-actionBlue/10">
-                  {user.fullName.charAt(0).toUpperCase()}
-                </div>
-                <span className="hidden sm:inline font-semibold text-sm text-brandDark pr-1">
-                  {user.fullName}
-                </span>
-                <ChevronDown size={14} className="text-secondaryText" />
-              </button>
-
-              {profileDropdownOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setProfileDropdownOpen(false)} />
-                  <div className="absolute right-0 mt-2 w-56 rounded-[16px] bg-white border border-grayBorder p-2 shadow-l3 z-20 animate-in fade-in slide-in-from-top-2 duration-150">
-                    <div className="px-4 py-2.5 border-b border-grayBorder">
-                      <p className="text-[10px] text-secondaryText uppercase tracking-widest font-bold">Learner</p>
-                      <p className="text-sm font-semibold text-brandDark truncate mt-0.5">{user.fullName}</p>
-                      <p className="text-xs text-secondaryText truncate">{user.email}</p>
-                    </div>
-                    
-                    <button 
-                      onClick={() => { setProfileDropdownOpen(false); alert('Chứng chỉ của bạn!') }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 mt-1 text-sm text-brandDark hover:text-actionBlue hover:bg-offWhite1 rounded-lg transition-colors text-left font-medium"
-                    >
-                      Chứng chỉ của tôi
-                    </button>
-
-                    <button 
-                      onClick={onLogout}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 mt-0.5 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors text-left font-medium"
-                    >
-                      Log out
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            <button
+              onClick={onLogout}
+              className="w-10 h-10 rounded-full border border-grayBorder bg-white hover:bg-red-50 hover:text-red-500 transition-colors flex items-center justify-center"
+              title="Dang xuat"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
         </div>
       </nav>
 
-      {/* ── MAIN CONTENT CONTAINER ── */}
-      <main className="max-w-[1440px] mx-auto px-6 mt-10">
-
-        {/* ── WELCOME BANNER ── */}
-        <div className="w-full rounded-[24px] bg-white border border-grayBorder p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-l1 relative overflow-hidden mb-8">
-          <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-actionBlue/5 rounded-full blur-3xl pointer-events-none" />
-          
-          <div>
-            <div className="flex items-center gap-1.5 text-actionBlue text-xs font-bold uppercase tracking-wider mb-2">
-              <Sparkles size={14} className="animate-pulse" />
-              Welcome back, excellent learner
+      <main className="max-w-[1440px] mx-auto px-6 mt-8">
+        <section className="mb-8">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-actionBlue">Dashboard hoc vien</p>
+              <h1 className="font-poppins text-2xl sm:text-3xl font-extrabold mt-2">
+                Khoa hoc cua toi
+              </h1>
+              <p className="text-sm text-secondaryText mt-2 max-w-2xl">
+                Theo doi tien do tat ca khoa hoc da dang ky va tiep tuc bai hoc dang hoc.
+              </p>
             </div>
-            <h1 className="font-poppins text-2xl sm:text-3xl font-extrabold text-brandDark tracking-tight">
-              {user.fullName}
-            </h1>
-            <p className="text-sm text-secondaryText mt-3 max-w-xl leading-relaxed">
-              Today is a great day to break language barriers. Keep up your daily streak to achieve outstanding results!
-            </p>
+            <button
+              onClick={() => myCourses[0] && handleStartStudy(myCourses[0].courseId)}
+              disabled={myCourses.length === 0}
+              className="flex items-center justify-center gap-2 px-5 py-3 bg-actionBlue hover:bg-actionBlueHover disabled:opacity-50 disabled:hover:bg-actionBlue text-white rounded-full font-bold text-sm transition-colors"
+            >
+              <Play size={16} fill="currentColor" />
+              Tiep tuc hoc
+            </button>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <SummaryBox label="Khoa hoc" value={summary.totalCourses.toString()} icon={BookOpen} />
+          <SummaryBox label="Tien do TB" value={`${summary.averageProgress}%`} icon={BarChart3} />
+          <SummaryBox label="Bai da xem" value={`${summary.completedLessons}/${summary.totalLessons}`} icon={CheckCircle} />
+          <SummaryBox label="Thoi gian hoc" value={formatDuration(summary.totalSeconds)} icon={Clock} />
+        </section>
+
+        <section className="bg-white border border-grayBorder rounded-[16px] shadow-l1">
+          <div className="px-5 py-4 border-b border-grayBorder flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <User size={18} className="text-actionBlue" />
+              <h2 className="font-poppins font-bold">Danh sach khoa hoc dang hoc</h2>
+            </div>
+            <span className="text-xs text-secondaryText font-semibold">{myCourses.length} khoa hoc</span>
           </div>
 
-          <button 
-            onClick={() => {
-              if (myCourses.length > 0) {
-                handleStartStudy(myCourses[0].id)
-              }
-            }}
-            className="flex items-center gap-2.5 px-6 py-3.5 bg-actionBlue hover:bg-actionBlueHover active:bg-actionBlueActive text-white rounded-[999px] font-bold text-[15px] tracking-wide shadow-sm hover:shadow hover:-translate-y-[1px] active:translate-y-0 transition-all self-stretch md:self-auto justify-center z-10 relative"
-          >
-            <Play size={14} fill="currentColor" />
-            Continue Learning
-          </button>
-        </div>
-
-        {/* ── STATS ROW ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
-          {stats.map((stat, i) => {
-            const Icon = stat.icon
-            return (
-              <div 
-                key={i} 
-                className="p-6 rounded-[16px] bg-white border border-grayBorder shadow-l1 hover:shadow-l2 transition-all flex items-center justify-between"
-              >
-                <div>
-                  <p className="text-[10px] text-secondaryText uppercase tracking-wider font-bold">{stat.label}</p>
-                  <p className="text-xl sm:text-2xl font-poppins font-bold text-brandDark mt-1">{stat.value}</p>
-                </div>
-                <div 
-                  className="w-12 h-12 rounded-[12px] flex items-center justify-center border"
-                  style={{ borderColor: `${stat.color}15`, color: stat.color, backgroundColor: `${stat.color}08` }}
-                >
-                  <Icon size={20} />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          <div className="lg:col-span-2">
-            <div className="flex items-center justify-between border-b border-grayBorder pb-4 mb-6">
-              <div className="flex gap-6 font-semibold text-sm">
-                <button 
-                  className="pb-4 -mb-[18px] transition-all relative text-actionBlue"
-                >
-                  Khóa học của tôi ({myCourses.length})
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-actionBlue" />
-                </button>
-              </div>
+          {loading ? (
+            <div className="py-14 flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-actionBlue" />
             </div>
-
-            <div className="flex flex-col gap-5">
-              {loading ? (
-                <div className="flex items-center justify-center py-10">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-actionBlue"></div>
-                </div>
-              ) : myCourses.length === 0 ? (
-                <div className="text-center py-10 text-secondaryText text-sm font-medium">
-                  Bạn chưa đăng ký khóa học nào. Hãy quay lại trang chủ để tham khảo lộ trình!
-                </div>
-              ) : (
-                myCourses.map((course, idx) => {
-                  const percent = Math.round((course.completed / course.total) * 100)
-                  const backupImages = [
-                    'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=400&q=80',
-                    'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=400&q=80',
-                    'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=400&q=80'
-                  ];
-                  const imageSrc = course.thumbnailUrl && !course.thumbnailUrl.includes('cdn.elearning.vn')
-                    ? course.thumbnailUrl
-                    : backupImages[idx % backupImages.length];
-
-                  return (
-                    <div 
-                      key={course.id}
-                      className="bg-white border border-grayBorder hover:border-actionBlue/20 rounded-[16px] p-5 flex flex-col sm:flex-row gap-5 items-stretch transition-all shadow-l1 hover:shadow-l2 duration-200"
-                    >
-                      <div className="w-full sm:w-36 h-24 rounded-[12px] overflow-hidden border border-grayBorder flex-shrink-0 relative bg-offWhite2">
-                        <img 
-                          src={imageSrc} 
-                          alt={course.title} 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div className="flex-1 flex flex-col justify-between py-1">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 bg-actionBlue/5 text-[9px] text-actionBlue font-bold uppercase rounded border border-actionBlue/10 tracking-wider">
-                              {getLevelLabel(course.level)}
-                            </span>
-                          </div>
-                          <h3 className="font-poppins text-base font-bold text-brandDark hover:text-actionBlue transition-colors leading-snug mt-1.5">
-                            {course.title}
-                          </h3>
-                        </div>
-
-                        <div className="mt-4">
-                          <div className="flex items-center justify-between text-[11px] text-secondaryText mb-1.5 font-semibold">
-                            <span>Tiến trình</span>
-                            <span>{course.completed}/{course.total} bài học ({percent}%)</span>
-                          </div>
-                          <div className="w-full h-2 bg-offWhite2 rounded-full overflow-hidden border border-grayBorder">
-                            <div 
-                              className="h-full rounded-full bg-actionBlue transition-all duration-500"
-                              style={{ width: `${percent}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-end sm:pl-3">
-                        <button 
-                          onClick={() => handleStartStudy(course.id)}
-                          className="p-3 bg-actionBlue text-white hover:bg-actionBlueHover rounded-[12px] transition-all shadow-l1 hover:scale-105 active:scale-95 flex items-center justify-center"
-                        >
-                          <ChevronRight size={18} />
-                        </button>
-                      </div>
-
-                    </div>
-                  )
-                })
-              )}
+          ) : error ? (
+            <div className="p-6 text-sm text-red-600">{error}</div>
+          ) : myCourses.length === 0 ? (
+            <div className="p-8 text-center text-sm text-secondaryText">
+              Ban chua co khoa hoc nao da dang ky thanh cong.
             </div>
-
-          </div>
-
-          <div className="flex flex-col gap-8">
-            <div className="rounded-[24px] bg-white border border-grayBorder p-6 shadow-l1 relative overflow-hidden">
-              <div className="absolute top-[-50px] right-[-50px] w-28 h-28 bg-green-500/5 rounded-full blur-2xl pointer-events-none" />
-              
-              <div className="flex items-center gap-1.5 text-green-600 text-xs font-bold uppercase tracking-wider mb-4">
-                <BookMarked size={14} />
-                Chứng chỉ của tôi
-              </div>
-
-              <div className="flex flex-col gap-4">
-                {/* Mock Certificate */}
-                <div className="p-4 border border-grayBorder rounded-[12px] bg-offWhite1 hover:bg-green-50/50 hover:border-green-200 transition-colors cursor-pointer group">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0">
-                      <Sparkles size={16} />
-                    </div>
-                    <div>
-                      <h4 className="font-poppins text-sm font-bold text-brandDark group-hover:text-green-700 transition-colors">
-                        English for Absolute Beginners
-                      </h4>
-                      <p className="text-[10px] text-secondaryText uppercase tracking-wider mt-1">
-                        Cấp ngày: 15/05/2026
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 border border-grayBorder rounded-[12px] bg-offWhite1 flex items-center justify-center">
-                  <span className="text-xs text-secondaryText font-medium text-center leading-relaxed">
-                    Hoàn thành 100% tiến độ khóa học để nhận thêm chứng chỉ mới nhé!
-                  </span>
-                </div>
-              </div>
+          ) : (
+            <div className="divide-y divide-grayBorder">
+              {myCourses.map((course, index) => (
+                <CourseProgressRow
+                  key={course.courseId}
+                  course={course}
+                  index={index}
+                  onOpen={() => handleStartStudy(course.courseId)}
+                />
+              ))}
             </div>
-          </div>
-
-        </div>
-
+          )}
+        </section>
       </main>
-
     </div>
   )
+}
+
+function SummaryBox({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string
+  value: string
+  icon: ElementType
+}) {
+  return (
+    <div className="bg-white border border-grayBorder rounded-[14px] p-5 shadow-l1 flex items-center justify-between">
+      <div>
+        <p className="text-[10px] text-secondaryText uppercase tracking-wider font-bold">{label}</p>
+        <p className="text-2xl font-poppins font-bold mt-1">{value}</p>
+      </div>
+      <div className="w-11 h-11 rounded-[12px] bg-actionBlue/5 text-actionBlue border border-actionBlue/10 flex items-center justify-center">
+        <Icon size={20} />
+      </div>
+    </div>
+  )
+}
+
+function CourseProgressRow({
+  course,
+  index,
+  onOpen,
+}: {
+  course: MyCourseLearningDTO
+  index: number
+  onOpen: () => void
+}) {
+  const fallbackImages = [
+    'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=500&q=80',
+    'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=500&q=80',
+    'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=500&q=80',
+  ]
+  const imageSrc = course.thumbnailUrl || fallbackImages[index % fallbackImages.length]
+
+  return (
+    <div className="p-5 flex flex-col md:flex-row gap-5 md:items-center">
+      <div className="w-full md:w-40 h-24 rounded-[10px] overflow-hidden bg-offWhite2 border border-grayBorder shrink-0">
+        <img src={imageSrc} alt={course.title} className="w-full h-full object-cover" />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="px-2 py-0.5 rounded border border-actionBlue/10 bg-actionBlue/5 text-actionBlue text-[10px] font-bold uppercase">
+            {getLevelLabel(course.level)}
+          </span>
+          <span className="text-[11px] text-secondaryText">
+            Cap nhat: {course.lastUpdatedAt ? formatDate(course.lastUpdatedAt) : 'Chua co tien do'}
+          </span>
+        </div>
+        <h3 className="font-poppins font-bold mt-2 truncate">{course.title}</h3>
+        <p className="text-sm text-secondaryText mt-1 line-clamp-2">{course.description || 'Khoa hoc tieng Anh truc tuyen.'}</p>
+
+        <div className="mt-4">
+          <div className="flex justify-between text-[11px] text-secondaryText font-semibold mb-1.5">
+            <span>Tien do</span>
+            <span>{course.completedLessons}/{course.totalLessons} bai ({course.progressPercent}%)</span>
+          </div>
+          <div className="w-full h-2 bg-offWhite2 rounded-full overflow-hidden border border-grayBorder">
+            <div className="h-full bg-actionBlue rounded-full" style={{ width: `${course.progressPercent}%` }} />
+          </div>
+        </div>
+      </div>
+
+      <button
+        onClick={onOpen}
+        className="md:ml-2 h-11 px-4 rounded-[10px] bg-actionBlue hover:bg-actionBlueHover text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+      >
+        Vao hoc
+        <ChevronRight size={17} />
+      </button>
+    </div>
+  )
+}
+
+function getLevelLabel(level: number) {
+  if (level === 0) return 'Beginner'
+  if (level === 1) return 'Intermediate'
+  return 'Advanced'
+}
+
+function formatDuration(seconds: number) {
+  if (!seconds) return '0 phut'
+  const minutes = Math.round(seconds / 60)
+  if (minutes < 60) return `${minutes} phut`
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  return rest > 0 ? `${hours}h ${rest}m` : `${hours}h`
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(value))
 }
