@@ -18,6 +18,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.wms.dto.StudentNotificationDTO;
+import java.util.UUID;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -97,6 +99,41 @@ public class NotificationService {
         return campaignRepository.findAllByOrderBySentAtDesc().stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+
+    // Lấy danh sách thông báo của học sinh
+    public List<StudentNotificationDTO> getStudentNotifications(User user) {
+        return notificationRepository.findByUserOrderByCreatedAtDesc(user).stream()
+                .map(n -> StudentNotificationDTO.builder()
+                        .id(n.getId())
+                        .title(n.getTitle())
+                        .message(n.getMessage())
+                        .isRead(n.getIsRead())
+                        .createdAt(n.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    // Đánh dấu 1 thông báo là đã đọc
+    @Transactional
+    public void markAsRead(User user, UUID id) {
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông báo"));
+        if (!notification.getUser().getId().equals(user.getId())) {
+            throw new IllegalArgumentException("Bạn không có quyền đọc thông báo này");
+        }
+        notification.setIsRead(true);
+        notificationRepository.save(notification);
+    }
+
+    // Đánh dấu tất cả thông báo là đã đọc
+    @Transactional
+    public void markAllAsRead(User user) {
+        List<Notification> unread = notificationRepository.findByUserAndIsReadFalse(user);
+        if (!unread.isEmpty()) {
+            unread.forEach(n -> n.setIsRead(true));
+            notificationRepository.saveAll(unread);
+        }
     }
 
     private void sendBulkEmail(List<String> emails, String subject, String text) {
