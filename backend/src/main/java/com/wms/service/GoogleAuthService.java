@@ -2,7 +2,6 @@ package com.wms.service;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,36 +29,37 @@ public class GoogleAuthService {
     public GoogleIdToken.Payload verifyGoogleCode(String code) {
         try {
             String tokenUrl = "https://oauth2.googleapis.com/token";
-            
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            
+
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add("code", code);
             params.add("client_id", clientId);
             params.add("client_secret", clientSecret);
             params.add("redirect_uri", "postmessage"); // Required to match GSI Popup frontend client
             params.add("grant_type", "authorization_code");
-            
+
             HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
-            
+
             // Send the authorization request to Google
             ResponseEntity<String> response = restTemplate.exchange(tokenUrl, HttpMethod.POST, entity, String.class);
-            
-            // Deserialize the response JSON body into a standard Map to safely extract id_token
+
+            // Deserialize the response JSON body into a standard Map to safely extract
+            // id_token
             java.util.Map<String, Object> tokenMap = objectMapper.readValue(response.getBody(), java.util.Map.class);
             String idTokenStr = (String) tokenMap.get("id_token");
             if (idTokenStr == null) {
-                throw new RuntimeException("Không tìm thấy id_token trong phản hồi từ Google! Phản hồi: " + response.getBody());
+                throw new RuntimeException(
+                        "Không tìm thấy id_token trong phản hồi từ Google! Phản hồi: " + response.getBody());
             }
-            
+
             // Verify the cryptographically signed id_token
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                    new NetHttpTransport(), 
-                    new GsonFactory()
-            )
-            .setAudience(Collections.singletonList(clientId))
-            .build();
+                    new NetHttpTransport(),
+                    new GsonFactory())
+                    .setAudience(Collections.singletonList(clientId))
+                    .build();
 
             GoogleIdToken idToken = verifier.verify(idTokenStr);
             if (idToken != null) {

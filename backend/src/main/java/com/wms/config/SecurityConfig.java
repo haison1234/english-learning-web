@@ -10,7 +10,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
@@ -25,11 +24,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS globally
-            .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless REST APIs
-            .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll() // Cho phép đi qua filter để AOP Aspect (@RequireAuth) tự kiểm tra và xử lý
-            );
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS globally
+                .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless REST APIs
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().permitAll() // Cho phép đi qua filter để AOP Aspect (@RequireAuth) tự kiểm tra và
+                                                  // xử lý
+                );
         return http.build();
     }
 
@@ -37,15 +37,14 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:3000",
-            "http://localhost:5173",
-            "http://localhost:5174",
-            "http://localhost:4000"
-        )); // Allow React frontend origins
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:4000")); // Allow React frontend origins
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
         configuration.setAllowCredentials(true);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
