@@ -17,7 +17,7 @@ public class UserHistoryDTO {
     public static class CourseProgress {
         private String courseTitle;
         private LocalDateTime enrolledAt;
-        private Integer paymentStatus;
+        private com.wms.enums.PaymentStatus paymentStatus;
         private Object progressDetails;
     }
 }

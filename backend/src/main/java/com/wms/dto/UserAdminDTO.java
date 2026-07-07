@@ -12,7 +12,7 @@ public class UserAdminDTO {
     private UUID id;
     private String fullName;
     private String email;
-    private Integer role;
+    private com.wms.enums.UserRole role;
     private UserStatus status;
     private LocalDateTime createdAt;
 }

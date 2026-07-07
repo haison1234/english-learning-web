@@ -11,6 +11,7 @@ import com.wms.repository.NotificationCampaignRepository;
 import com.wms.repository.NotificationRepository;
 import com.wms.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import com.wms.enums.UserRole;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -48,7 +49,7 @@ public class NotificationService {
         List<User> targetUsers = new ArrayList<>();
         if ("ALL".equalsIgnoreCase(request.getTargetAudience())) {
             targetUsers = userRepository.findAll().stream()
-                    .filter(u -> u.getRole() == 1) // Chỉ gửi cho Student (role = 1)
+                    .filter(u -> u.getRole() == UserRole.STUDENT) // Chỉ gửi cho Student (role = STUDENT)
                     .collect(Collectors.toList());
         } else if ("COURSE".equalsIgnoreCase(request.getTargetAudience()) && request.getCourseId() != null) {
             targetUsers = enrollmentRepository.findByCourseId(request.getCourseId()).stream()
