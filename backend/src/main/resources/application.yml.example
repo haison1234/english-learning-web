@@ -47,3 +47,6 @@ vnpay:
   url: ${VNPAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
   return-url: ${VNPAY_RETURN_URL:http://localhost:5173/payment/vnpay-return}
 
+file:
+  upload-dir: uploads
+
