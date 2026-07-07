@@ -7,6 +7,17 @@ spring:
     name: elearning-backend
   profiles:
     active: local # Tự động nạp cấu hình bổ sung từ application-local.yml
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SPRING_MAIL_USERNAME:your-email@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:your-email-password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
   datasource:
     url: jdbc:sqlserver://localhost:1433;databaseName=ELearningDB;encrypt=true;trustServerCertificate=true
