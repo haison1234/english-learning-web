@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AuthModal, { useAuthModal } from './components/AuthModal'
 import CertificateModal from './components/CertificateModal'
 import PricingModal from './components/PricingModal'
