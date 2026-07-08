@@ -152,6 +152,15 @@ export async function toggleUserStatus(userId: string): Promise<UserAdminDTO> {
   return res.json();
 }
 
+export async function unlockUser(userId: string): Promise<UserAdminDTO> {
+  const res = await fetch(`${API_URL}/api/v1/admin/users/${userId}/unlock`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Không thể mở khóa tài khoản.');
+  return res.json();
+}
+
 export async function getUserHistory(userId: string): Promise<UserHistoryDTO> {
   const res = await fetch(`${API_URL}/api/v1/admin/users/${userId}/history`, {
     headers: getAuthHeaders(),
@@ -308,6 +317,16 @@ export async function createCoupon(data: CouponRequestDTO): Promise<CouponRespon
   return res.json();
 }
 
+export async function deleteCoupon(code: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/v1/admin/coupons/${code}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Không thể xóa mã giảm giá.');
+  }
+}
 // ─── Reports ─────────────────────────────────────────────────────────────────
 
 export async function getAssignmentReport(lessonId: string): Promise<AssignmentReportDTO> {

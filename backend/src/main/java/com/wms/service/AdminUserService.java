@@ -5,6 +5,7 @@ import com.wms.dto.UserAdminDTO;
 import com.wms.dto.UserHistoryDTO;
 import com.wms.entity.Enrollment;
 import com.wms.entity.User;
+import com.wms.enums.UserRole;
 import com.wms.enums.UserStatus;
 import com.wms.exception.ResourceNotFoundException;
 import com.wms.repository.EnrollmentRepository;
@@ -30,10 +31,11 @@ public class AdminUserService {
     private final EnrollmentRepository enrollmentRepository;
     private final ObjectMapper objectMapper;
 
-    // 1. Lấy danh sách người dùng (Có phân trang)
+    // 1. Lấy danh sách người dùng
     public Page<UserAdminDTO> getAllUsersPaginated(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<User> userPage = userRepository.findAll(pageable);
+        // Thay vì findAll, giờ chỉ lấy Role = Student
+        Page<User> userPage = userRepository.findByRole(UserRole.STUDENT, pageable);
 
         return userPage.map(user -> UserAdminDTO.builder()
                 .id(user.getId())
@@ -45,13 +47,12 @@ public class AdminUserService {
                 .build());
     }
 
-    // 2. Khóa / Mở khóa tài khoản
+    // 2. Khóa / Mở khóa tài khoản (Hàm cũ của bạn - Giữ nguyên)
     @Transactional
     public UserAdminDTO toggleUserStatus(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng: " + userId));
 
-        // Đảo trạng thái dựa trên Enum
         if (user.getStatus() == UserStatus.ACTIVE) {
             user.setStatus(UserStatus.INACTIVE);
         } else {
@@ -60,14 +61,20 @@ public class AdminUserService {
 
         User updatedUser = userRepository.save(user);
 
-        return UserAdminDTO.builder()
-                .id(updatedUser.getId())
-                .fullName(updatedUser.getFullName())
-                .email(updatedUser.getEmail())
-                .role(updatedUser.getRole())
-                .status(updatedUser.getStatus())
-                .createdAt(updatedUser.getCreatedAt())
-                .build();
+        return mapToDTO(updatedUser);
+    }
+
+    // 2.1 THÊM MỚI: Ép mở khóa trực tiếp (Dành riêng cho nút Mở khóa của Frontend)
+    @Transactional
+    public UserAdminDTO unlockUser(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng: " + userId));
+
+        // Ép thẳng trạng thái về ACTIVE
+        user.setStatus(UserStatus.ACTIVE);
+        User updatedUser = userRepository.save(user);
+
+        return mapToDTO(updatedUser);
     }
 
     // 3. Xem lịch sử học tập của học sinh
@@ -100,6 +107,18 @@ public class AdminUserService {
                 .fullName(user.getFullName())
                 .email(user.getEmail())
                 .enrolledCourses(progressList)
+                .build();
+    }
+
+    // Hàm phụ để code gọn hơn
+    private UserAdminDTO mapToDTO(User user) {
+        return UserAdminDTO.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .status(user.getStatus())
+                .createdAt(user.getCreatedAt())
                 .build();
     }
 }

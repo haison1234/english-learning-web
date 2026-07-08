@@ -15,7 +15,6 @@ public enum CourseStatus {
         this.value = value;
     }
 
-    @JsonValue
     public byte getValue() {
         return value;
     }

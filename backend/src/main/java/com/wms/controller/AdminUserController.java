@@ -24,9 +24,16 @@ public class AdminUserController {
         return ResponseEntity.ok(adminUserService.getAllUsersPaginated(page, size));
     }
 
+    // API Đảo trạng thái cũ
     @PutMapping("/{userId}/toggle-status")
     public ResponseEntity<UserAdminDTO> toggleUserStatus(@PathVariable UUID userId) {
         return ResponseEntity.ok(adminUserService.toggleUserStatus(userId));
+    }
+
+    // THÊM MỚI: API Mở khóa chuyên dụng cho nút bấm
+    @PutMapping("/{userId}/unlock")
+    public ResponseEntity<UserAdminDTO> unlockUser(@PathVariable UUID userId) {
+        return ResponseEntity.ok(adminUserService.unlockUser(userId));
     }
 
     @GetMapping("/{userId}/history")

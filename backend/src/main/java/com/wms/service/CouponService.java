@@ -103,4 +103,18 @@ public class CouponService {
                 .status(status)
                 .build();
     }
+
+    @Transactional
+    public void deleteCoupon(String code) {
+        Coupon coupon = couponRepository.findById(code)
+                .orElseThrow(() -> new BadRequestException("Mã giảm giá không tồn tại!"));
+
+        if (coupon.getUsedCount() != null && coupon.getUsedCount() > 0) {
+            throw new BadRequestException(
+                    "Mã '" + code + "' đã được sử dụng " + coupon.getUsedCount() +
+                            " lần, không thể xóa. Bạn có thể để mã tự hết hạn.");
+        }
+
+        couponRepository.deleteById(code);
+    }
 }

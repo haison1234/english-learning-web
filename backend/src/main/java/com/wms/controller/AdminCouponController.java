@@ -29,4 +29,11 @@ public class AdminCouponController {
     public ResponseEntity<List<CouponResponseDTO>> getAllCoupons() {
         return ResponseEntity.ok(couponService.getAllCoupons());
     }
+
+    // Admin hủy mã giảm giá (chỉ khi chưa ai dùng)
+    @DeleteMapping("/{code}")
+    public ResponseEntity<Void> deleteCoupon(@PathVariable String code) {
+        couponService.deleteCoupon(code);
+        return ResponseEntity.noContent().build();
+    }
 }
