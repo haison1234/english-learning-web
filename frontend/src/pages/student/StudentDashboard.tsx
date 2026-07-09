@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ElementType } from 'react'
-import { BarChart3, Bell, Check, BookOpen, CheckCircle, ChevronRight, Clock, LogOut, Play, User } from 'lucide-react'
+import { BarChart3, Bell, Check, BookOpen, CheckCircle, ChevronRight, Clock, LogOut, Play, User, Key } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { UserProfile } from '../../services/authService'
+import { UserProfile, changePassword } from '../../services/authService'
 import { getMyLearningCourses, MyCourseLearningDTO } from '../../services/learningService'
 import { getStudentNotifications, markNotificationAsRead, markAllNotificationsAsRead, StudentNotificationDTO } from '../../services/studentService'
 
@@ -77,6 +77,48 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
     window.addEventListener('click', handleOutsideClick)
     return () => window.removeEventListener('click', handleOutsideClick)
   }, [isNotifOpen])
+
+  // Change password states
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
+  const [oldPass, setOldPass] = useState('')
+  const [newPass, setNewPass] = useState('')
+  const [confirmPass, setConfirmPass] = useState('')
+  const [changePassError, setChangePassError] = useState<string | null>(null)
+  const [changePassSuccess, setChangePassSuccess] = useState(false)
+  const [changePassLoading, setChangePassLoading] = useState(false)
+
+  const handlePasswordChangeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setChangePassError(null)
+    setChangePassSuccess(false)
+
+    if (newPass.length < 6) {
+      setChangePassError('Mật khẩu mới phải từ 6 ký tự trở lên.')
+      return
+    }
+
+    if (newPass !== confirmPass) {
+      setChangePassError('Xác nhận mật khẩu mới không khớp.')
+      return
+    }
+
+    try {
+      setChangePassLoading(true)
+      await changePassword(oldPass, newPass)
+      setChangePassSuccess(true)
+      setOldPass('')
+      setNewPass('')
+      setConfirmPass('')
+      setTimeout(() => {
+        setIsChangePasswordOpen(false)
+        setChangePassSuccess(false)
+      }, 2000)
+    } catch (err) {
+      setChangePassError(err instanceof Error ? err.message : 'Lỗi không xác định.')
+    } finally {
+      setChangePassLoading(false)
+    }
+  }
 
   useEffect(() => {
     async function loadData() {
@@ -217,6 +259,13 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
               <span className="text-sm font-semibold max-w-[180px] truncate">{user.fullName}</span>
             </div>
             <button
+              onClick={() => setIsChangePasswordOpen(true)}
+              className="w-10 h-10 rounded-full border border-grayBorder bg-white hover:bg-offWhite2 transition-colors flex items-center justify-center text-secondaryText hover:text-brandDark"
+              title="Đổi mật khẩu"
+            >
+              <Key size={18} />
+            </button>
+            <button
               onClick={onLogout}
               className="w-10 h-10 rounded-full border border-grayBorder bg-white hover:bg-red-50 hover:text-red-500 transition-colors flex items-center justify-center"
               title="Dang xuat"
@@ -290,6 +339,109 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
           )}
         </section>
       </main>
+
+      {/* ── Change Password Modal ── */}
+      {isChangePasswordOpen && (
+        <div className="fixed inset-0 bg-brandDark/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-grayBorder shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between border-b border-grayBorder pb-4">
+              <h3 className="font-poppins font-bold text-lg text-brandDark">Đổi mật khẩu</h3>
+              <button
+                onClick={() => {
+                  setIsChangePasswordOpen(false);
+                  setOldPass('');
+                  setNewPass('');
+                  setConfirmPass('');
+                  setChangePassError(null);
+                  setChangePassSuccess(false);
+                }}
+                className="text-secondaryText hover:text-brandDark"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handlePasswordChangeSubmit} className="mt-4 space-y-4">
+              {changePassError && (
+                <div className="p-3 text-xs bg-red-50 border border-red-200 text-red-600 rounded-lg">
+                  {changePassError}
+                </div>
+              )}
+              {changePassSuccess && (
+                <div className="p-3 text-xs bg-green-50 border border-green-200 text-green-600 rounded-lg">
+                  Đổi mật khẩu thành công!
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-secondaryText uppercase tracking-wider mb-1.5">
+                  Mật khẩu cũ
+                </label>
+                <input
+                  type="password"
+                  value={oldPass}
+                  onChange={(e) => setOldPass(e.target.value)}
+                  required
+                  placeholder="Nhập mật khẩu cũ..."
+                  className="w-full px-4 py-2.5 bg-offWhite1 border border-grayBorder rounded-xl text-sm focus:outline-none focus:border-actionBlue"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-secondaryText uppercase tracking-wider mb-1.5">
+                  Mật khẩu mới
+                </label>
+                <input
+                  type="password"
+                  value={newPass}
+                  onChange={(e) => setNewPass(e.target.value)}
+                  required
+                  placeholder="Nhập mật khẩu mới..."
+                  className="w-full px-4 py-2.5 bg-offWhite1 border border-grayBorder rounded-xl text-sm focus:outline-none focus:border-actionBlue"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-secondaryText uppercase tracking-wider mb-1.5">
+                  Xác nhận mật khẩu mới
+                </label>
+                <input
+                  type="password"
+                  value={confirmPass}
+                  onChange={(e) => setConfirmPass(e.target.value)}
+                  required
+                  placeholder="Nhập lại mật khẩu mới..."
+                  className="w-full px-4 py-2.5 bg-offWhite1 border border-grayBorder rounded-xl text-sm focus:outline-none focus:border-actionBlue"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsChangePasswordOpen(false);
+                    setOldPass('');
+                    setNewPass('');
+                    setConfirmPass('');
+                    setChangePassError(null);
+                    setChangePassSuccess(false);
+                  }}
+                  className="px-4 py-2 text-xs font-semibold text-secondaryText hover:text-brandDark"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={changePassLoading}
+                  className="px-5 py-2 rounded-xl bg-actionBlue hover:bg-actionBlueHover text-white font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50"
+                >
+                  {changePassLoading ? 'Đang lưu...' : 'Xác nhận'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

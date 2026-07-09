@@ -129,6 +129,24 @@ export function logoutUser(): void {
 }
 
 /**
+ * Change the logged-in user's password
+ */
+export async function changePassword(oldPassword: string, newPassword: string): Promise<{ message: string }> {
+  const response = await fetch(`${API_URL}/api/v1/auth/change-password`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ oldPassword, newPassword }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Thay đổi mật khẩu thất bại.');
+  }
+
+  return response.json();
+}
+
+/**
  * Helper function to create authenticated headers
  */
 export function getAuthHeaders(): HeadersInit {
