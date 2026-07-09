@@ -17,6 +17,7 @@ public class UserDTO {
     private String fullName;
     private String email;
     private String avatarUrl;
+    private Integer streakCount;
     private UserRole role;
     private UserStatus status;
     private boolean emailVerified;

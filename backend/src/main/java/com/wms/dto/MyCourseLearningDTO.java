@@ -22,6 +22,7 @@ public class MyCourseLearningDTO {
     private int progressPercent;
     private int totalTimeSpentSeconds;
     private UUID nextLessonId;
+    private String certificateCode;
     private LocalDateTime enrolledAt;
     private LocalDateTime lastUpdatedAt;
 }

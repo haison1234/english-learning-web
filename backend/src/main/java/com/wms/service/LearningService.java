@@ -112,6 +112,7 @@ public class LearningService {
         }
 
         LessonProgress saved = lessonProgressRepository.save(progress);
+        checkAndGenerateCertificate(enrollment);
         return toProgressDTO(saved);
     }
 
@@ -171,6 +172,7 @@ public class LearningService {
         ExerciseAttempt savedAttempt = exerciseAttemptRepository.save(attempt);
 
         markLessonCompletedByExercise(enrollment, lesson);
+        checkAndGenerateCertificate(enrollment);
 
         return ExerciseSubmitResponse.builder()
                 .attemptId(savedAttempt.getId())
@@ -216,6 +218,7 @@ public class LearningService {
                 .progressPercent(calculatePercent(completedLessons, lessons.size()))
                 .totalTimeSpentSeconds(sumTimeSpent(progressByLesson))
                 .nextLessonId(nextLessonId)
+                .certificateCode(enrollment.getCertificateCode())
                 .enrolledAt(enrollment.getEnrolledAt())
                 .lastUpdatedAt(progressByLesson.values().stream()
                         .map(LessonProgress::getLastUpdatedAt)
@@ -478,5 +481,21 @@ public class LearningService {
         private String url;
         private String textContent;
         private int durationSeconds;
+    }
+
+    private void checkAndGenerateCertificate(Enrollment enrollment) {
+        if (enrollment.getCertificateCode() != null) {
+            return;
+        }
+        Course course = enrollment.getCourse();
+        List<Lesson> lessons = lessonRepository.findByCourseIdOrderByOrderIndexAsc(course.getId());
+        Map<UUID, LessonProgress> progressByLesson = getProgressByLesson(enrollment.getId());
+        int completedLessons = countCompletedLessons(lessons, progressByLesson);
+
+        if (lessons.size() > 0 && completedLessons == lessons.size()) {
+            String certCode = "CERT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            enrollment.setCertificateCode(certCode);
+            enrollmentRepository.save(enrollment);
+        }
     }
 }
