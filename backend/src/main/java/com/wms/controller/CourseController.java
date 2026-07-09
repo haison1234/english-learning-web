@@ -5,6 +5,7 @@ import com.wms.dto.CourseDetailDTO;
 import com.wms.dto.CreateCourseRequestDTO;
 import com.wms.enums.CourseStatus;
 import com.wms.service.CourseService;
+import com.wms.annotation.RequireAuth;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +32,7 @@ public class CourseController {
 
     // 1. API Tạo mới khóa học (US-A01)
     @PostMapping
+    @RequireAuth({"ADMIN"})
     @ResponseStatus(HttpStatus.CREATED) // Tự động trả về HTTP Status 201 khi tạo thành công
     public CourseDTO createCourse(@RequestBody CreateCourseRequestDTO request) {
         return courseService.createCourse(request);
@@ -38,6 +40,7 @@ public class CourseController {
 
     // 2. API Cập nhật trạng thái khóa học (DRAFT, PUBLISHED, ARCHIVED)
     @PatchMapping("/{id}/status")
+    @RequireAuth({"ADMIN"})
     @ResponseStatus(HttpStatus.NO_CONTENT) // Tự động trả về HTTP Status 204 (Thành công và không cần trả về body)
     public void updateCourseStatus(
             @PathVariable UUID id,
