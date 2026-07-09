@@ -7,6 +7,7 @@ export interface UserProfile {
   fullName: string;
   email: string;
   avatarUrl: string | null;
+  streakCount?: number;
   role: 'GUEST' | 'STUDENT' | 'ADMIN' | number;
   status: 'INACTIVE' | 'ACTIVE' | number;
 }
@@ -141,6 +142,84 @@ export async function changePassword(oldPassword: string, newPassword: string): 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.message || 'Thay đổi mật khẩu thất bại.');
+  }
+
+  return response.json();
+}
+
+/**
+ * Forgot password - request verification token via email
+ */
+export async function forgotPassword(email: string): Promise<{ message: string }> {
+  const response = await fetch(`${API_URL}/api/v1/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Gửi mã khôi phục thất bại.');
+  }
+
+  return response.json();
+}
+
+/**
+ * Reset password - submit verification token and new password
+ */
+export async function resetPassword(email: string, token: string, newPassword: string): Promise<{ message: string }> {
+  const response = await fetch(`${API_URL}/api/v1/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, token, newPassword }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Đặt lại mật khẩu thất bại.');
+  }
+
+  return response.json();
+}
+
+/**
+ * Update student profile (full name, avatar URL)
+ */
+export async function updateProfile(fullName: string, avatarUrl: string | null): Promise<UserProfile> {
+  const response = await fetch(`${API_URL}/api/v1/auth/profile`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ fullName, avatarUrl }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Cập nhật hồ sơ thất bại.');
+  }
+
+  const updatedUser = await response.json();
+  localStorage.setItem('user', JSON.stringify(updatedUser));
+  return updatedUser;
+}
+
+/**
+ * Leaderboard ranks entries
+ */
+export interface LeaderboardEntry {
+  fullName: string;
+  completedCount: number;
+  streakCount: number;
+}
+
+export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
+  const response = await fetch(`${API_URL}/api/v1/auth/leaderboard`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Không thể lấy bảng xếp hạng.');
   }
 
   return response.json();

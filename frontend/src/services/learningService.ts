@@ -13,6 +13,7 @@ export interface MyCourseLearningDTO {
   progressPercent: number
   totalTimeSpentSeconds: number
   nextLessonId: string | null
+  certificateCode?: string | null
   enrolledAt: string
   lastUpdatedAt: string | null
 }
