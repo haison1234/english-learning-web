@@ -9,8 +9,7 @@ interface HomePageProps {
   onLogin: () => void;
   onRegister: () => void;
   onCertificateClick: () => void;
-  onPricingClick: () => void;
-  onCartClick: () => void;
+  onCartClick?: () => void;
 }
 
 export default function HomePage({
@@ -19,7 +18,6 @@ export default function HomePage({
   onLogin,
   onRegister,
   onCertificateClick,
-  onPricingClick,
   onCartClick,
 }: HomePageProps) {
   return (
@@ -30,7 +28,6 @@ export default function HomePage({
         onLogin={onLogin}
         onRegister={onRegister}
         onCertificateClick={onCertificateClick}
-        onPricingClick={onPricingClick}
         onDashboardClick={() => {}} // Hero will use navigate now
         onCartClick={onCartClick}
       />

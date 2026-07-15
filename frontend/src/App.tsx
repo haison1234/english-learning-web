@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AuthModal, { useAuthModal } from './components/AuthModal'
 import CertificateModal from './components/CertificateModal'
-import PricingModal from './components/PricingModal'
 import CartDrawer from './components/CartDrawer'
 import PaymentSuccessModal from './components/PaymentSuccessModal'
 import { UserProfile, getCurrentUser, logoutUser } from './services/authService'
@@ -31,7 +30,6 @@ import AdminCouponsPage from './pages/admin/AdminCouponsPage'
 function AppInner() {
   const { modal, open, close } = useAuthModal()
   const [certificateOpen, setCertificateOpen] = useState(false)
-  const [pricingOpen, setPricingOpen] = useState(false)
   const [user, setUser] = useState<UserProfile | null>(null)
   const [cartOpen, setCartOpen] = useState(false)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
@@ -72,7 +70,6 @@ function AppInner() {
                 onLogin={() => open('login')}
                 onRegister={() => open('register')}
                 onCertificateClick={() => setCertificateOpen(true)}
-                onPricingClick={() => setPricingOpen(true)}
                 onCartClick={() => setCartOpen(true)}
               />
             } 
@@ -86,7 +83,6 @@ function AppInner() {
                 onLogin={() => open('login')}
                 onRegister={() => open('register')}
                 onCertificateClick={() => setCertificateOpen(true)}
-                onPricingClick={() => setPricingOpen(true)}
                 onCartClick={() => setCartOpen(true)}
               />
             } 
@@ -142,7 +138,6 @@ function AppInner() {
                     <li>Email: support@english-learn.vn</li>
                     <li>Hotline: 1900 8198</li>
                     <li><button onClick={() => setCertificateOpen(true)} className="hover:text-actionBlue text-left">Certificate Lookup</button></li>
-                    <li><button onClick={() => setPricingOpen(true)} className="hover:text-actionBlue text-left">Pricing</button></li>
                   </ul>
                 </div>
               </div>
@@ -170,7 +165,6 @@ function AppInner() {
           }}
         />
         <CertificateModal isOpen={certificateOpen} onClose={() => setCertificateOpen(false)} />
-        <PricingModal isOpen={pricingOpen} onClose={() => setPricingOpen(false)} onAuth={() => open('register')} />
         <CartDrawer
           isOpen={cartOpen}
           onClose={() => setCartOpen(false)}

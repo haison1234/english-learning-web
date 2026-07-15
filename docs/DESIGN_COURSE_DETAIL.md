@@ -50,25 +50,25 @@ Bổ sung API lấy chi tiết khóa học và danh sách bài học đi kèm m�
     ```json
     {
       "id": "aaaa0001-0000-0000-0000-000000000000",
-      "title": "Python Cơ Bản Cho Người Mới Bắt Đầu",
-      "description": "Khóa học Python toàn diện dành cho...",
+      "title": "Giao Tiếp Tiếng Anh Cơ Bản",
+      "description": "Khóa học tiếng Anh giao tiếp toàn diện dành cho người mới bắt đầu...",
       "level": "BEGINNER",
       "courseType": "FREE",
       "basePrice": 0,
-      "thumbnailUrl": "https://cdn.elearning.vn/thumbs/python-basic.jpg",
-      "trailerUrl": "https://cdn.elearning.vn/trailers/python-basic-trailer.mp4",
+      "thumbnailUrl": "https://cdn.elearning.vn/thumbs/english-basic.jpg",
+      "trailerUrl": "https://cdn.elearning.vn/trailers/english-basic-trailer.mp4",
       "status": "PUBLISHED",
       "createdById": "11111111-0000-0000-0000-000000000001",
-      "createdByName": "Nguyễn Văn Admin",
+      "createdByName": "Giáo viên John Doe",
       "createdAt": "2026-06-03T03:42:16",
       "updatedAt": "2026-06-03T03:42:16",
       "lessons": [
         {
           "id": "bbbb0101-0000-0000-0000-000000000000",
           "courseId": "aaaa0001-0000-0000-0000-000000000000",
-          "title": "Bài 1: Giới Thiệu Python & Cài Đặt Môi Trường",
+          "title": "Bài 1: Chào Hỏi Cơ Bản Bằng Tiếng Anh",
           "contentType": "VIDEO",
-          "contentUrl": "https://cdn.elearning.vn/videos/python/01-intro.mp4",
+          "contentUrl": "https://cdn.elearning.vn/videos/english/01-intro.mp4",
           "textContent": null,
           "durationSeconds": 900,
           "orderIndex": 1,
@@ -121,15 +121,15 @@ SPECS Reference: userstory.md - US-G02
 
 ### TC-01: Happy Path - Khách xem chi tiết khóa học
 *   **Given:** Khách chưa đăng nhập, đang ở trang chủ.
-*   **When:** Bấm nút "Xem chi tiết" khóa học "Python Cơ Bản".
+*   **When:** Bấm nút "Xem chi tiết" khóa học "Giao Tiếp Tiếng Anh Cơ Bản".
 *   **Then:**
     *   ✓ Giao diện chuyển sang trang chi tiết khóa học thành công.
-    *   ✓ API `/api/v1/courses/{id}` được gọi và hiển thị đúng thông tin khóa học Python.
+    *   ✓ API `/api/v1/courses/{id}` được gọi và hiển thị đúng thông tin khóa học Tiếng Anh.
     *   ✓ Hiển thị syllabus gồm 4 bài học theo đúng thứ tự.
-    *   ✓ Tên giáo viên "Nguyễn Văn Admin" được hiển thị rõ ràng.
+    *   ✓ Tên giáo viên "Giáo viên John Doe" được hiển thị rõ ràng.
 
 ### TC-02: Phát thử video Trailer không cần đăng nhập
-*   **Given:** Khách đang ở trang chi tiết khóa học "Python Cơ Bản".
+*   **Given:** Khách đang ở trang chi tiết khóa học "Giao Tiếp Tiếng Anh Cơ Bản".
 *   **When:** Nhấp vào trình phát video trailer.
 *   **Then:**
     *   ✓ Video phát mượt mà không yêu cầu tài khoản hay Token.
