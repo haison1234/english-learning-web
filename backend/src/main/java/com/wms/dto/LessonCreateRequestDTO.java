@@ -11,4 +11,6 @@ public class LessonCreateRequestDTO {
     private String textContent;
     private int durationSeconds;
     private boolean isPreview;
+    private Object questions;
+    private java.util.List<AttachmentDTO> attachments;
 }

@@ -5,13 +5,18 @@ import com.wms.dto.CourseDetailDTO;
 import com.wms.dto.CreateCourseRequestDTO;
 import com.wms.enums.CourseStatus;
 import com.wms.service.CourseService;
+import com.wms.repository.EnrollmentRepository;
+import com.wms.entity.Enrollment;
+import com.wms.exception.ResourceNotFoundException;
 import com.wms.annotation.RequireAuth;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.time.format.DateTimeFormatter;
 
 @RestController
 @RequestMapping("/api/v1/courses")
@@ -19,6 +24,24 @@ import java.util.UUID;
 public class CourseController {
 
     private final CourseService courseService;
+    private final EnrollmentRepository enrollmentRepository;
+
+    @GetMapping("/certificate/verify/{code}")
+    public Map<String, Object> verifyCertificate(@PathVariable String code) {
+        Enrollment enrollment = enrollmentRepository.findByCertificateCode(code)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chứng chỉ tương ứng với mã: " + code));
+        
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String issuedAt = enrollment.getEnrolledAt().format(formatter);
+        
+        return Map.of(
+            "studentName", enrollment.getUser().getFullName(),
+            "courseTitle", enrollment.getCourse().getTitle(),
+            "verifyCode", code,
+            "issuedAt", issuedAt,
+            "status", "valid"
+        );
+    }
 
     @GetMapping
     public List<CourseDTO> getAllCourses() {

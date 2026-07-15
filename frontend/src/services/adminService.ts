@@ -50,6 +50,11 @@ export interface CourseDTO {
   updatedAt: string;
 }
 
+export interface AttachmentDTO {
+  name: string;
+  url: string;
+}
+
 export interface LessonDTO {
   id: string;
   courseId: string;
@@ -60,6 +65,8 @@ export interface LessonDTO {
   durationSeconds: number;
   orderIndex: number;
   preview: boolean;
+  questions?: any;
+  attachments?: AttachmentDTO[];
   createdAt: string;
   updatedAt: string;
 }
@@ -84,6 +91,8 @@ export interface LessonCreateRequestDTO {
   textContent?: string;
   durationSeconds: number;
   isPreview: boolean;
+  questions?: any;
+  attachments?: AttachmentDTO[];
 }
 
 export interface NotificationRequestDTO {

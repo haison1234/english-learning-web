@@ -7,6 +7,7 @@ interface CourseDetailPageProps {
   onLogin: () => void;
   onRegister: () => void;
   onCertificateClick: () => void;
+  onPricingClick?: () => void;
   onCartClick: () => void;
 }
 

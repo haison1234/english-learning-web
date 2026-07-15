@@ -11,6 +11,7 @@ import com.wms.entity.Lesson;
 import com.wms.entity.LessonProgress;
 import com.wms.entity.User;
 import com.wms.enums.PaymentStatus;
+import com.wms.enums.LessonContentType;
 import com.wms.exception.ForbiddenException;
 import com.wms.exception.ResourceNotFoundException;
 import com.wms.mapper.CourseMapper;
@@ -18,8 +19,10 @@ import com.wms.repository.EnrollmentRepository;
 import com.wms.repository.ExerciseAttemptRepository;
 import com.wms.repository.LessonProgressRepository;
 import com.wms.repository.LessonRepository;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.stereotype.Service;
@@ -236,6 +239,7 @@ public class LearningService {
                 .contentType(lesson.getType() != null ? lesson.getType() : com.wms.enums.LessonContentType.VIDEO)
                 .contentUrl(content.url)
                 .textContent(content.textContent)
+                .attachments(content.attachments)
                 .durationSeconds(content.durationSeconds)
                 .orderIndex(lesson.getOrderIndex() != null ? lesson.getOrderIndex() : 0)
                 .preview(Boolean.TRUE.equals(lesson.getIsPreview()))
@@ -353,6 +357,15 @@ public class LearningService {
     }
 
     private List<ExerciseDefinition> exerciseDefinitions(Lesson lesson) {
+        if (lesson.getType() == LessonContentType.QUIZ && lesson.getContent() != null && !lesson.getContent().isEmpty()) {
+            try {
+                return objectMapper.readValue(lesson.getContent(), new com.fasterxml.jackson.core.type.TypeReference<List<ExerciseDefinition>>() {});
+            } catch (Exception e) {
+                System.err.println("Error parsing quiz questions from lesson content: " + e.getMessage());
+                return new ArrayList<>();
+            }
+        }
+
         List<ExerciseDefinition> definitions = new ArrayList<>();
 
         definitions.add(ExerciseDefinition.builder()
@@ -448,7 +461,9 @@ public class LearningService {
 
         try {
             JsonNode root = objectMapper.readTree(rawContent);
-            if (root.has("url")) {
+            if (root.has("contentUrl")) {
+                content.url = root.get("contentUrl").asText();
+            } else if (root.has("url")) {
                 content.url = root.get("url").asText();
             }
             if (root.has("textContent")) {
@@ -456,6 +471,12 @@ public class LearningService {
             }
             if (root.has("durationSeconds")) {
                 content.durationSeconds = root.get("durationSeconds").asInt(0);
+            }
+            if (root.has("attachments")) {
+                content.attachments = objectMapper.readValue(
+                    root.get("attachments").toString(),
+                    new com.fasterxml.jackson.core.type.TypeReference<List<AttachmentDTO>>() {}
+                );
             }
         } catch (Exception ignored) {
             return content;
@@ -466,6 +487,8 @@ public class LearningService {
     @Getter
     @Setter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     private static class ExerciseDefinition {
         private String id;
         private String type;
@@ -481,6 +504,7 @@ public class LearningService {
         private String url;
         private String textContent;
         private int durationSeconds;
+        private List<AttachmentDTO> attachments;
     }
 
     private void checkAndGenerateCertificate(Enrollment enrollment) {

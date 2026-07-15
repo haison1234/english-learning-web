@@ -10,6 +10,7 @@ interface HeroProps {
   onLogin: () => void
   onRegister: () => void
   onCertificateClick: () => void
+  onPricingClick: () => void
   onDashboardClick?: () => void
   onCartClick?: () => void
 }
@@ -20,6 +21,7 @@ export default function Hero({
   onLogin,
   onRegister,
   onCertificateClick,
+  onPricingClick,
   onCartClick,
 }: HeroProps) {
   const navigate = useNavigate()
@@ -48,6 +50,8 @@ export default function Hero({
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } else if (targetId === 'certificate') {
       onCertificateClick()
+    } else if (targetId === 'pricing') {
+      onPricingClick()
     } else {
       const el = document.getElementById(targetId)
       if (el) {
@@ -79,7 +83,7 @@ export default function Hero({
             {[
               { label: 'Home', id: 'home' },
               { label: 'Courses', id: 'courses' },
-              { label: 'Certificates', id: 'certificate' },
+              { label: 'Pricing', id: 'pricing' },
               { label: 'About', id: 'about' },
             ].map((link) => (
               <a
@@ -221,7 +225,7 @@ export default function Hero({
             {[
               { label: 'Home', id: 'home' },
               { label: 'Courses', id: 'courses' },
-              { label: 'Certificates', id: 'certificate' },
+              { label: 'Pricing', id: 'pricing' },
               { label: 'About', id: 'about' },
             ].map((link) => (
               <a

@@ -26,8 +26,10 @@ export default function Collection({
     async function loadCourses() {
       try {
         const data = await getCourses()
-        // Chỉ hiển thị các khóa học có status là PUBLISHED (status === 1)
-        const publishedCourses = data.filter(c => c.status === 1)
+        // Chỉ hiển thị các khóa học có status là PUBLISHED (status === 1 hoặc 'PUBLISHED')
+        const publishedCourses = data.filter(
+          (c) => c.status === 1 || (c.status as unknown as string) === 'PUBLISHED'
+        )
         setCourses(publishedCourses)
       } catch (err) {
         console.error('Lỗi tải khóa học:', err)

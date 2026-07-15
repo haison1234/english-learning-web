@@ -21,6 +21,8 @@ public class LessonDTO {
     private int durationSeconds;
     private int orderIndex;
     private boolean isPreview;
+    private Object questions;
+    private java.util.List<AttachmentDTO> attachments;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wms.dto.AssignmentCreateRequestDTO;
 import com.wms.dto.LessonCreateRequestDTO;
 import com.wms.dto.LessonDTO;
+import com.wms.dto.AttachmentDTO;
 import com.wms.dto.LessonReorderRequestDTO;
 import com.wms.entity.Course;
 import com.wms.entity.Lesson;
@@ -43,15 +44,24 @@ public class LessonService {
 
 
 
-        try {
-            var details = new Object() {
-                public final String contentUrl = request.getContentUrl();
-                public final String textContent = request.getTextContent();
-                public final int durationSeconds = request.getDurationSeconds();
-            };
-            lesson.setContent(objectMapper.writeValueAsString(details));
-        } catch (Exception e) {
-            lesson.setContent("{}");
+        if (request.getContentType() == LessonContentType.QUIZ) {
+            try {
+                lesson.setContent(objectMapper.writeValueAsString(request.getQuestions()));
+            } catch (Exception e) {
+                lesson.setContent("[]");
+            }
+        } else {
+            try {
+                var details = new Object() {
+                    public final String contentUrl = request.getContentUrl();
+                    public final String textContent = request.getTextContent();
+                    public final int durationSeconds = request.getDurationSeconds();
+                    public final java.util.List<AttachmentDTO> attachments = request.getAttachments();
+                };
+                lesson.setContent(objectMapper.writeValueAsString(details));
+            } catch (Exception e) {
+                lesson.setContent("{}");
+            }
         }
 
         Lesson savedLesson = lessonRepository.save(lesson);
@@ -67,15 +77,24 @@ public class LessonService {
         lesson.setType(request.getContentType());
         lesson.setIsPreview(request.isPreview());
 
-        try {
-            var details = new Object() {
-                public final String contentUrl = request.getContentUrl();
-                public final String textContent = request.getTextContent();
-                public final int durationSeconds = request.getDurationSeconds();
-            };
-            lesson.setContent(objectMapper.writeValueAsString(details));
-        } catch (Exception e) {
-            lesson.setContent("{}");
+        if (request.getContentType() == LessonContentType.QUIZ) {
+            try {
+                lesson.setContent(objectMapper.writeValueAsString(request.getQuestions()));
+            } catch (Exception e) {
+                lesson.setContent("[]");
+            }
+        } else {
+            try {
+                var details = new Object() {
+                    public final String contentUrl = request.getContentUrl();
+                    public final String textContent = request.getTextContent();
+                    public final int durationSeconds = request.getDurationSeconds();
+                    public final java.util.List<AttachmentDTO> attachments = request.getAttachments();
+                };
+                lesson.setContent(objectMapper.writeValueAsString(details));
+            } catch (Exception e) {
+                lesson.setContent("{}");
+            }
         }
 
         Lesson updatedLesson = lessonRepository.save(lesson);

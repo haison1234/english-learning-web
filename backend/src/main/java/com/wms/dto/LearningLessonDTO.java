@@ -18,6 +18,7 @@ public class LearningLessonDTO {
     private LessonContentType contentType;
     private String contentUrl;
     private String textContent;
+    private java.util.List<AttachmentDTO> attachments;
     private int durationSeconds;
     private int orderIndex;
     private boolean preview;

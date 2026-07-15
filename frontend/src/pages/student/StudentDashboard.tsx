@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ElementType } from 'react'
-import { BarChart3, Bell, Check, BookOpen, CheckCircle, ChevronRight, Clock, LogOut, Play, User, Key } from 'lucide-react'
+import { BarChart3, Bell, Check, BookOpen, CheckCircle, ChevronRight, Clock, LogOut, Play, User, Key, Award } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { UserProfile, changePassword, updateProfile, getLeaderboard, LeaderboardEntry } from '../../services/authService'
 import { getMyLearningCourses, MyCourseLearningDTO } from '../../services/learningService'
+import PricingModal from '../../components/PricingModal'
+import CertificateModal from '../../components/CertificateModal'
 import { getStudentNotifications, markNotificationAsRead, markAllNotificationsAsRead, StudentNotificationDTO } from '../../services/studentService'
 
 interface StudentDashboardProps {
@@ -14,6 +16,9 @@ interface StudentDashboardProps {
 export default function StudentDashboard({ user, onLogout }: StudentDashboardProps) {
   const navigate = useNavigate()
   const [myCourses, setMyCourses] = useState<MyCourseLearningDTO[]>([])
+  const [pricingOpen, setPricingOpen] = useState(false)
+  const [certificateOpen, setCertificateOpen] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -295,6 +300,34 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
             <span>Learn</span>
           </button>
 
+          {/* Navigation Links */}
+          <div className="hidden md:flex items-center gap-8">
+            <button
+              onClick={() => navigate('/')}
+              className="text-sm font-semibold text-secondaryText hover:text-actionBlue transition-colors"
+            >
+              Trang chủ
+            </button>
+            <button
+              onClick={() => navigate('/student')}
+              className="text-sm font-semibold text-actionBlue"
+            >
+              Khóa học của tôi
+            </button>
+            <button
+              onClick={() => setPricingOpen(true)}
+              className="text-sm font-semibold text-secondaryText hover:text-actionBlue transition-colors"
+            >
+              Bảng giá hội viên
+            </button>
+            <button
+              onClick={() => setCertificateOpen(true)}
+              className="text-sm font-semibold text-secondaryText hover:text-actionBlue transition-colors"
+            >
+              Chứng chỉ
+            </button>
+          </div>
+
           <div className="flex items-center gap-3">
             {/* Notification Bell */}
             <div className="relative" onClick={(e) => e.stopPropagation()}>
@@ -384,41 +417,70 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
               </div>
             )}
 
-            <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-full border border-grayBorder bg-offWhite1">
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt="Avatar" className="w-7 h-7 rounded-full object-cover border border-grayBorder" />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-actionBlue/10 text-actionBlue flex items-center justify-center font-bold text-xs">
-                  {user.fullName.charAt(0).toUpperCase()}
-                </div>
+            {/* User Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-full border border-grayBorder bg-white hover:bg-offWhite1 hover:border-darkGrayBorder transition-all active:scale-95"
+              >
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="Avatar" className="w-7 h-7 rounded-full object-cover border border-grayBorder" />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-actionBlue/10 text-actionBlue flex items-center justify-center font-bold text-xs">
+                    {user.fullName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-sm font-semibold max-w-[120px] truncate">{user.fullName}</span>
+              </button>
+
+              {dropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
+                  <div className="absolute right-0 mt-2 w-56 rounded-[16px] bg-white border border-grayBorder p-2 shadow-l3 z-20 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="px-4 py-2.5 border-b border-grayBorder">
+                      <p className="text-[10px] text-secondaryText uppercase tracking-widest font-bold">Học viên</p>
+                      <p className="text-sm font-semibold text-brandDark truncate mt-0.5">{user.fullName}</p>
+                      <p className="text-xs text-secondaryText truncate">{user.email || ''}</p>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false)
+                        setEditName(user.fullName)
+                        setEditAvatar(user.avatarUrl || '')
+                        setIsEditProfileOpen(true)
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 mt-1 text-sm text-brandDark hover:text-actionBlue hover:bg-offWhite1 rounded-lg transition-colors text-left font-medium"
+                    >
+                      <User size={16} />
+                      Chỉnh sửa hồ sơ
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false)
+                        setIsChangePasswordOpen(true)
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 mt-0.5 text-sm text-brandDark hover:text-actionBlue hover:bg-offWhite1 rounded-lg transition-colors text-left font-medium"
+                    >
+                      <Key size={16} />
+                      Đổi mật khẩu
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false)
+                        onLogout()
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 mt-0.5 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors text-left font-medium"
+                    >
+                      <LogOut size={16} />
+                      Đăng xuất
+                    </button>
+                  </div>
+                </>
               )}
-              <span className="text-sm font-semibold max-w-[180px] truncate">{user.fullName}</span>
             </div>
-            <button
-              onClick={() => {
-                setEditName(user.fullName);
-                setEditAvatar(user.avatarUrl || '');
-                setIsEditProfileOpen(true);
-              }}
-              className="w-10 h-10 rounded-full border border-grayBorder bg-white hover:bg-offWhite2 transition-colors flex items-center justify-center text-secondaryText hover:text-brandDark"
-              title="Chỉnh sửa hồ sơ"
-            >
-              <User size={18} />
-            </button>
-            <button
-              onClick={() => setIsChangePasswordOpen(true)}
-              className="w-10 h-10 rounded-full border border-grayBorder bg-white hover:bg-offWhite2 transition-colors flex items-center justify-center text-secondaryText hover:text-brandDark"
-              title="Đổi mật khẩu"
-            >
-              <Key size={18} />
-            </button>
-            <button
-              onClick={onLogout}
-              className="w-10 h-10 rounded-full border border-grayBorder bg-white hover:bg-red-50 hover:text-red-500 transition-colors flex items-center justify-center text-secondaryText hover:text-red-500"
-              title="Dang xuat"
-            >
-              <LogOut size={18} />
-            </button>
           </div>
         </div>
       </nav>
@@ -454,41 +516,44 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start mb-12">
-          {/* Left Column: Courses */}
-          <div className="lg:col-span-2 bg-white border border-grayBorder rounded-[16px] shadow-l1">
-            <div className="px-5 py-4 border-b border-grayBorder flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <User size={18} className="text-actionBlue" />
-                <h2 className="font-poppins font-bold">Danh sach khoa hoc dang hoc</h2>
+          {/* Left Column: Courses & Certificates */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Box 1: Danh sach khoa hoc dang hoc */}
+            <div className="bg-white border border-grayBorder rounded-[16px] shadow-l1">
+              <div className="px-5 py-4 border-b border-grayBorder flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <User size={18} className="text-actionBlue" />
+                  <h2 className="font-poppins font-bold">Danh sach khoa hoc dang hoc</h2>
+                </div>
+                <span className="text-xs text-secondaryText font-semibold">{myCourses.length} khoa hoc</span>
               </div>
-              <span className="text-xs text-secondaryText font-semibold">{myCourses.length} khoa hoc</span>
-            </div>
 
-            {loading ? (
-              <div className="py-14 flex justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-actionBlue" />
-              </div>
-            ) : error ? (
-              <div className="p-6 text-sm text-red-600">{error}</div>
-            ) : myCourses.length === 0 ? (
-              <div className="p-8 text-center text-sm text-secondaryText">
-                Ban chua co khoa hoc nao da dang ky thanh cong.
-              </div>
-            ) : (
-              <div className="divide-y divide-grayBorder">
-                {myCourses.map((course, index) => (
-                  <CourseProgressRow
-                    key={course.courseId}
-                    course={course}
-                    index={index}
-                    onOpen={() => handleStartStudy(course.courseId)}
-                    onViewCertificate={(courseTitle, certCode) => {
-                      setViewingCertificate({ courseTitle, certCode })
-                    }}
-                  />
-                ))}
-              </div>
-            )}
+              {loading ? (
+                <div className="py-14 flex justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-actionBlue" />
+                </div>
+              ) : error ? (
+                <div className="p-6 text-sm text-red-600">{error}</div>
+              ) : myCourses.length === 0 ? (
+                <div className="p-8 text-center text-sm text-secondaryText">
+                  Ban chua co khoa hoc nao da dang ky thanh cong.
+                </div>
+              ) : (
+                <div className="divide-y divide-grayBorder">
+                  {myCourses.map((course, index) => (
+                    <CourseProgressRow
+                      key={course.courseId}
+                      course={course}
+                      index={index}
+                      onOpen={() => handleStartStudy(course.courseId)}
+                      onViewCertificate={(courseTitle, certCode) => {
+                        setViewingCertificate({ courseTitle, certCode })
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right Column: Leaderboard */}
@@ -786,6 +851,20 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
           </div>
         </div>
       )}
+
+      {/* ── Pricing Modal ── */}
+      <PricingModal
+        isOpen={pricingOpen}
+        onClose={() => setPricingOpen(false)}
+        onAuth={() => {}}
+        isLoggedIn={true}
+      />
+
+      {/* ── Certificate Modal ── */}
+      <CertificateModal
+        isOpen={certificateOpen}
+        onClose={() => setCertificateOpen(false)}
+      />
     </div>
   )
 }

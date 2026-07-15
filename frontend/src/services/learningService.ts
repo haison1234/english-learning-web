@@ -18,6 +18,11 @@ export interface MyCourseLearningDTO {
   lastUpdatedAt: string | null
 }
 
+export interface AttachmentDTO {
+  name: string
+  url: string
+}
+
 export interface LearningLessonDTO {
   id: string
   courseId: string
@@ -25,6 +30,7 @@ export interface LearningLessonDTO {
   contentType: number
   contentUrl: string | null
   textContent: string | null
+  attachments?: AttachmentDTO[]
   durationSeconds: number
   orderIndex: number
   preview: boolean

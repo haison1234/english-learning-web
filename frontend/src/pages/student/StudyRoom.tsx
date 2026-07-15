@@ -270,6 +270,42 @@ export default function StudyRoom({ user }: StudyRoomProps) {
                   <p className="text-sm text-secondaryText leading-relaxed whitespace-pre-line">
                     {activeLesson.textContent || 'Hay xem noi dung bai hoc va hoan thanh bai tap de tu danh gia kien thuc.'}
                   </p>
+
+                  {/* Tài liệu đính kèm */}
+                  {activeLesson.attachments && activeLesson.attachments.length > 0 && (
+                    <div className="border-t border-grayBorder pt-4 mt-6">
+                      <h4 className="font-poppins font-bold text-sm text-brandDark mb-3">Tài liệu đính kèm bài học</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {activeLesson.attachments.map((att, index) => {
+                          const encodedAttUrl = encodeURI(att.url);
+                          return (
+                            <div key={index} className="flex items-center justify-between p-3.5 bg-offWhite1 border border-grayBorder rounded-xl text-xs gap-3">
+                              <span className="font-bold text-brandDark truncate flex-1" title={att.name}>
+                                📄 {att.name}
+                              </span>
+                              <div className="flex gap-2 shrink-0">
+                                <a
+                                  href={encodedAttUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-3 py-1.5 bg-actionBlue/10 hover:bg-actionBlue/20 text-actionBlue font-bold rounded-lg transition-colors"
+                                >
+                                  Xem
+                                </a>
+                                <a
+                                  href={encodedAttUrl}
+                                  download={att.name}
+                                  className="px-3 py-1.5 bg-actionBlue hover:bg-actionBlueHover text-white font-bold rounded-lg transition-colors"
+                                >
+                                  Tải xuống
+                                </a>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -388,6 +424,71 @@ function LessonContent({
           onEnded={onEnded}
           className="w-full"
         />
+      </div>
+    )
+  }
+
+  if (lesson.contentType === 4) {
+    return (
+      <div className="min-h-[260px] rounded-[12px] border border-grayBorder bg-offWhite1 p-6 flex flex-col items-center justify-center text-center">
+        <ClipboardList size={40} className="text-actionBlue mb-3" />
+        <h3 className="text-base font-bold mb-2">Bài tập kiểm tra (Quiz)</h3>
+        <p className="text-xs text-secondaryText max-w-md leading-relaxed">
+          Bài học này là một bài tập kiểm tra. Vui lòng chọn tab <strong>"Bài tập"</strong> ở phần phía dưới để bắt đầu làm bài và nộp kết quả nhé.
+        </p>
+      </div>
+    )
+  }
+
+  if (lesson.contentType === 3) {
+    const encodedUrl = lesson.contentUrl ? encodeURI(lesson.contentUrl) : '';
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between bg-actionBlue/5 border border-actionBlue/10 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <span className="w-10 h-10 rounded-[10px] bg-red-50 text-red-500 border border-red-100 flex items-center justify-center font-bold text-xs">
+              PDF
+            </span>
+            <div>
+              <p className="text-sm font-bold text-brandDark">{lesson.title}</p>
+              <p className="text-xs text-secondaryText">Tài liệu học tập PDF</p>
+            </div>
+          </div>
+          {encodedUrl && (
+            <div className="flex items-center gap-2">
+              <a
+                href={encodedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-actionBlue/10 hover:bg-actionBlue/20 text-actionBlue text-xs font-bold uppercase rounded-xl transition-all"
+              >
+                Mở ở tab mới
+              </a>
+              <a
+                href={encodedUrl}
+                download={lesson.title}
+                className="px-4 py-2 bg-actionBlue hover:bg-actionBlueHover text-white text-xs font-bold uppercase rounded-xl transition-all flex items-center gap-1.5"
+              >
+                <span>💾</span>
+                <span>Tải xuống</span>
+              </a>
+            </div>
+          )}
+        </div>
+        
+        {encodedUrl ? (
+          <div className="relative w-full h-[600px] border border-grayBorder rounded-xl overflow-hidden bg-offWhite2 shadow-inner">
+            <iframe
+              src={`${encodedUrl}#toolbar=0`}
+              title={lesson.title}
+              className="w-full h-full"
+            />
+          </div>
+        ) : (
+          <div className="min-h-[260px] rounded-[12px] border border-grayBorder bg-offWhite1 p-6 flex flex-col items-center justify-center text-center">
+            <p className="text-xs text-secondaryText">Không tìm thấy liên kết file PDF.</p>
+          </div>
+        )}
       </div>
     )
   }

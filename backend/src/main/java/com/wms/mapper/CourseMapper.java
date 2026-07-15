@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wms.dto.CourseDTO;
 import com.wms.dto.CourseDetailDTO;
 import com.wms.dto.LessonDTO;
+import com.wms.dto.AttachmentDTO;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.wms.entity.Course;
 import com.wms.entity.Lesson;
 import com.wms.enums.CourseLevel;
@@ -117,6 +119,7 @@ public class CourseMapper {
         String contentUrl = null;
         String textContent = null;
         int durationSeconds = 0;
+        java.util.List<AttachmentDTO> attachments = null;
 
         if (lesson.getContent() != null && !lesson.getContent().isEmpty()) {
             try {
@@ -135,6 +138,22 @@ public class CourseMapper {
                 if (jsonNode.has("durationSeconds")) {
                     durationSeconds = jsonNode.get("durationSeconds").asInt();
                 }
+
+                if (jsonNode.has("attachments")) {
+                    attachments = objectMapper.readValue(
+                        jsonNode.get("attachments").toString(),
+                        new TypeReference<List<AttachmentDTO>>() {}
+                    );
+                }
+            } catch (Exception e) {
+                // Ignore parse errors
+            }
+        }
+
+        Object questions = null;
+        if (lesson.getType() == LessonContentType.QUIZ && lesson.getContent() != null && !lesson.getContent().isEmpty()) {
+            try {
+                questions = objectMapper.readTree(lesson.getContent());
             } catch (Exception e) {
                 // Ignore parse errors
             }
@@ -150,6 +169,8 @@ public class CourseMapper {
                 .durationSeconds(durationSeconds)
                 .orderIndex(lesson.getOrderIndex() != null ? lesson.getOrderIndex() : 0)
                 .isPreview(lesson.getIsPreview() != null && lesson.getIsPreview())
+                .questions(questions)
+                .attachments(attachments)
                 .createdAt(null)
                 .updatedAt(null)
                 .build();
